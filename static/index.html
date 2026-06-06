@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Virtual Mouse - Remote Controller</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <!-- Main Application Container -->
+    <div class="app-container">
+        
+        <!-- ================= 1. Splash Screen ================= -->
+        <section id="screen-splash" class="screen active">
+            <div class="splash-content">
+                <div class="logo-container">
+                    <div class="ripple ripple-1"></div>
+                    <div class="ripple ripple-2"></div>
+                    <div class="ripple ripple-3"></div>
+                    <!-- Glowing Mouse SVG -->
+                    <svg class="glowing-mouse-svg" viewBox="0 0 100 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="25" y="10" width="50" height="100" rx="25" stroke="url(#mouse-gradient)" stroke-width="4" />
+                        <line x1="50" y1="10" x2="50" y2="50" stroke="url(#mouse-gradient)" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="50" cy="35" r="4" fill="#00f0ff" />
+                        <path d="M50 110 C50 125, 30 135, 50 145" stroke="url(#mouse-gradient)" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <h1 class="splash-title">Virtual Mouse</h1>
+                <p class="splash-tagline">Turn your phone into a wireless mouse</p>
+                <div class="carousel-dots">
+                    <span class="dot"></span>
+                    <span class="dot active"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 2. Connection Screen ================= -->
+        <section id="screen-home" class="screen">
+            <header class="app-header">
+                <button class="icon-btn header-menu-btn" id="btn-hamburger">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <h2>Connect to Device</h2>
+                <button class="icon-btn header-help-btn" id="btn-help">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                </button>
+            </header>
+            
+            <div class="scroll-content">
+                <p class="section-label">Choose connection method</p>
+                
+                <!-- Connection Tabs -->
+                <div class="connection-tabs">
+                    <button class="tab-btn active" data-tab="wifi">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="tab-icon"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3"></line></svg>
+                        WiFi
+                    </button>
+                    <button class="tab-btn" data-tab="bluetooth">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="tab-icon"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"></path></svg>
+                        Bluetooth
+                    </button>
+                    <button class="tab-btn" data-tab="usb">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="tab-icon"><rect x="6" y="2" width="12" height="6" rx="1"></rect><rect x="9" y="16" width="6" height="6" rx="1"></rect><line x1="10" y1="8" x2="10" y2="16"></line><line x1="14" y1="8" x2="14" y2="16"></line></svg>
+                        USB
+                    </button>
+                </div>
+
+                <!-- Tab Panel: WiFi -->
+                <div id="panel-wifi" class="tab-panel active">
+                    <div class="input-group">
+                        <label>IP Address</label>
+                        <div class="input-wrapper">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="input-icon"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                            <input type="text" id="ip-address" placeholder="192.168.1.5">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Port Number</label>
+                        <div class="input-wrapper">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="input-icon"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line><line x1="6" y1="15" x2="6.01" y2="15" stroke-width="3"></line><line x1="10" y1="15" x2="10.01" y2="15" stroke-width="3"></line></svg>
+                            <input type="text" id="port-number" placeholder="5000" value="5000">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Device Name (Optional)</label>
+                        <div class="input-wrapper">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="input-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            <input type="text" id="device-name" placeholder="My Laptop" value="My Laptop">
+                        </div>
+                    </div>
+
+                    <!-- Connection Status -->
+                    <div class="connection-status">
+                        <span class="status-indicator disconnect-state"></span>
+                        <span id="txt-status-detail">Not Connected</span>
+                    </div>
+
+                    <button class="primary-btn connect-btn" id="btn-connect-wifi">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        <span id="txt-connect-btn">Connect Now</span>
+                    </button>
+                </div>
+
+                <!-- Tab Panel: Bluetooth -->
+                <div id="panel-bluetooth" class="tab-panel">
+                    <button class="outline-btn scan-btn" id="btn-scan-bluetooth">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><circle cx="12" cy="12" r="10"></circle><line x1="22" y1="12" x2="18" y2="12"></line><line x1="6" y1="12" x2="2" y2="12"></line><line x1="12" y1="6" x2="12" y2="2"></line><line x1="12" y1="22" x2="12" y2="18"></line></svg>
+                        Scan Devices
+                    </button>
+                    
+                    <div class="device-list">
+                        <div class="device-item" data-name="Dell Laptop" data-ip="Dell-PC (Bluetooth)">
+                            <div class="device-info">
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="device-icon"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="17" x2="12" y2="20"></line></svg>
+                                <div>
+                                    <p class="dev-name">Dell Laptop</p>
+                                    <p class="dev-addr">00:1A:7D:DA:71:13</p>
+                                </div>
+                            </div>
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                        <div class="device-item" data-name="HP Pavilion" data-ip="HP-Laptop (Bluetooth)">
+                            <div class="device-info">
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="device-icon"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="17" x2="12" y2="20"></line></svg>
+                                <div>
+                                    <p class="dev-name">HP Pavilion</p>
+                                    <p class="dev-addr">98:D3:31:FD:68:21</p>
+                                </div>
+                            </div>
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                        <div class="device-item" data-name="Lenovo ThinkPad" data-ip="ThinkPad (Bluetooth)">
+                            <div class="device-info">
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="device-icon"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="17" x2="12" y2="20"></line></svg>
+                                <div>
+                                    <p class="dev-name">Lenovo ThinkPad</p>
+                                    <p class="dev-addr">AC:23:3F:56:13:7A</p>
+                                </div>
+                            </div>
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Panel: USB -->
+                <div id="panel-usb" class="tab-panel">
+                    <div class="usb-instructions">
+                        <div class="usb-icon-circle">
+                            <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="usb-plug-svg"><rect x="6" y="2" width="12" height="6" rx="1"></rect><rect x="9" y="16" width="6" height="6" rx="1"></rect><line x1="10" y1="8" x2="10" y2="16"></line><line x1="14" y1="8" x2="14" y2="16"></line></svg>
+                        </div>
+                        <h3>Connect via USB cable</h3>
+                        <p>Plug in your mobile device to your computer using a USB cable. Make sure USB Debugging is enabled (for Android) or Trust This Computer is selected (for iOS) to establish a connection.</p>
+                        <button class="primary-btn connect-btn" id="btn-connect-usb">
+                            Connect USB
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 3. Mouse Control Screen ================= -->
+        <section id="screen-mouse" class="screen">
+            <header class="app-header active-header">
+                <div class="header-dev-desc">
+                    <div class="connected-icon-box">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="17" x2="12" y2="20"></line></svg>
+                    </div>
+                    <div>
+                        <h3 id="lbl-device-title">My Laptop</h3>
+                        <p id="lbl-device-address">192.168.1.5:5000</p>
+                    </div>
+                </div>
+                
+                <div class="header-right-meta">
+                    <div class="connection-status-pill">
+                        <span class="status-indicator connect-state"></span>
+                        <span>Connected</span>
+                    </div>
+                    <button class="icon-btn" id="btn-mouse-more">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="control-area">
+                <!-- Trackpad Grid Area -->
+                <div class="trackpad" id="trackpad-area">
+                    <div class="touch-glowing-cursor" id="touch-glow-cursor"></div>
+                    <p class="trackpad-instructions">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" class="instruction-icon"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14h-2v-4h2zm0-6h-2V8h2z"></path></svg>
+                        Tap = Click &nbsp;•&nbsp; Drag = Move &nbsp;•&nbsp; Two-finger = Scroll
+                    </p>
+                </div>
+
+                <!-- Bottom Quick Controls Grid -->
+                <div class="mouse-actions-grid">
+                    <!-- Left Click Button -->
+                    <button class="mouse-btn left-click-btn" id="btn-left-click">
+                        <div class="mouse-icon-visual left-active">
+                            <svg viewBox="0 0 24 36" class="inner-mouse-svg">
+                                <rect x="2" y="2" width="20" height="32" rx="10" stroke="currentColor" stroke-width="2" fill="none" />
+                                <path d="M12 2 V16" stroke="currentColor" stroke-width="2" />
+                                <path d="M2 16 H22" stroke="currentColor" stroke-width="2" />
+                                <rect x="2" y="2" width="10" height="14" rx="4" class="left-click-part" fill="currentColor" opacity="0.3"/>
+                            </svg>
+                        </div>
+                        <span>Left Click</span>
+                    </button>
+
+                    <!-- Right Click Button -->
+                    <button class="mouse-btn right-click-btn" id="btn-right-click">
+                        <div class="mouse-icon-visual right-active">
+                            <svg viewBox="0 0 24 36" class="inner-mouse-svg">
+                                <rect x="2" y="2" width="20" height="32" rx="10" stroke="currentColor" stroke-width="2" fill="none" />
+                                <path d="M12 2 V16" stroke="currentColor" stroke-width="2" />
+                                <path d="M2 16 H22" stroke="currentColor" stroke-width="2" />
+                                <rect x="12" y="2" width="10" height="14" rx="4" class="right-click-part" fill="currentColor" opacity="0.3"/>
+                            </svg>
+                        </div>
+                        <span>Right Click</span>
+                    </button>
+
+                    <!-- Scroll Controller -->
+                    <div class="scroll-wheel-container">
+                        <button class="scroll-arrow scroll-up-arrow" id="btn-scroll-up">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                        </button>
+                        <div class="scroll-indicator-slider">
+                            <div class="scroll-wheel-rail">
+                                <div class="scroll-notch" id="scroll-wheel-notch"></div>
+                            </div>
+                            <span class="scroll-label">Scroll</span>
+                        </div>
+                        <button class="scroll-arrow scroll-down-arrow" id="btn-scroll-down">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Keyboard and scroll toggles -->
+                <div class="mouse-aux-grid">
+                    <div class="aux-card scroll-mode-card">
+                        <div class="card-text">
+                            <p class="card-title">Scroll Mode</p>
+                            <p class="card-subtitle" id="lbl-scroll-state">Enabled</p>
+                        </div>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="toggle-scroll-mode" checked>
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+
+                    <button class="aux-card keyboard-card-btn" id="btn-keyboard-trigger">
+                        <div class="keyboard-icon-box">
+                            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line><line x1="14" y1="8" x2="14.01" y2="8"></line><line x1="18" y1="8" x2="18.01" y2="8"></line><line x1="6" y1="12" x2="6.01" y2="12"></line><line x1="10" y1="12" x2="10.01" y2="12"></line><line x1="14" y1="12" x2="14.01" y2="12"></line><line x1="18" y1="12" x2="18.01" y2="12"></line><line x1="7" y1="16" x2="17" y2="16"></line></svg>
+                        </div>
+                        <span class="keyboard-label">Keyboard</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Virtual Keyboard Overlay -->
+            <div class="keyboard-overlay" id="overlay-keyboard">
+                <div class="keyboard-sheet">
+                    <div class="keyboard-sheet-header">
+                        <h4>Text Entry Transmitter</h4>
+                        <button class="close-overlay-btn" id="btn-close-keyboard">Done</button>
+                    </div>
+                    <p class="kb-helper-text">Characters typed here are sent immediately to your computer.</p>
+                    <div class="kb-input-row">
+                        <input type="text" id="kb-hidden-input" placeholder="Type here to send text...">
+                        <button class="kb-action-key" id="btn-kb-backspace">Backspace</button>
+                        <button class="kb-action-key" id="btn-kb-enter">Enter</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 4. Settings Screen ================= -->
+        <section id="screen-settings" class="screen">
+            <header class="app-header">
+                <h2>Settings</h2>
+            </header>
+            
+            <div class="scroll-content">
+                <p class="settings-group-label">General</p>
+                <div class="settings-card">
+                    <div class="setting-row">
+                        <div class="setting-label-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                            <span>Dark Mode</span>
+                        </div>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="toggle-dark-mode" checked>
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-row-column">
+                        <div class="setting-slider-header">
+                            <div class="setting-label-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                <span>Sensitivity (DPI)</span>
+                            </div>
+                            <span class="slider-value" id="lbl-dpi-value">Medium (1600)</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="slider-dpi" min="800" max="3200" step="400" value="1600">
+                        <div class="slider-ticks">
+                            <span>800</span>
+                            <span>1600</span>
+                            <span>3200</span>
+                        </div>
+                    </div>
+
+                    <div class="setting-row clickable" id="btn-menu-reconnect">
+                        <div class="setting-label-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                            <div>
+                                <p class="sett-title">Reconnect</p>
+                                <p class="sett-desc">Reconnect to last device</p>
+                            </div>
+                        </div>
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </div>
+
+                <p class="settings-group-label">Support</p>
+                <div class="settings-card">
+                    <div class="setting-row clickable" id="btn-support-use">
+                        <div class="setting-label-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            <span>How to Use</span>
+                        </div>
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                    
+                    <div class="setting-row clickable" id="btn-support-faq">
+                        <div class="setting-label-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            <span>Help & FAQ</span>
+                        </div>
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                    
+                    <div class="setting-row" id="btn-support-about">
+                        <div class="setting-label-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            <span>About</span>
+                        </div>
+                        <span class="about-version">v1.0.0</span>
+                    </div>
+                </div>
+
+                <button class="disconnect-btn-action" id="btn-action-disconnect">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                    Disconnect
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= Bottom Navigation Bar ================= -->
+        <nav class="bottom-navbar" id="main-bottom-nav">
+            <button class="nav-item active" data-screen="screen-home">
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" data-screen="screen-mouse">
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><rect x="5" y="2" width="14" height="20" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="2" x2="12" y2="10" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="6" r="1.5" fill="currentColor"/></svg>
+                <span>Mouse</span>
+            </button>
+            <button class="nav-item" data-screen="screen-settings">
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Settings</span>
+            </button>
+        </nav>
+
+        <!-- SVG Gradients Definition -->
+        <svg style="width:0;height:0;position:absolute;">
+            <defs>
+                <linearGradient id="mouse-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#00f0ff" />
+                    <stop offset="100%" stop-color="#22a0ff" />
+                </linearGradient>
+            </defs>
+        </svg>
+
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
