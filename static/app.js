@@ -199,9 +199,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
 
         try {
-            // WebSockets run on PORT + 1 (5001) as set in server.py
-            const wsPort = 5001; 
-            socket = new WebSocket(`ws://${ip}:${wsPort}`);
+            let wsUrl = "";
+            // If user enters an ngrok address or an https domain, use wss:// (secure websocket)
+            if (ip.includes("ngrok") || ip.includes(".app") || ip.includes(".dev") || ip.includes(".io")) {
+                // Remove http/https if they pasted the full URL
+                let cleanIp = ip.replace("https://", "").replace("http://", "").replace(/\/$/, "");
+                wsUrl = `wss://${cleanIp}`;
+            } else {
+                // Local network connection defaults to port 5001
+                const wsPort = 5001; 
+                wsUrl = `ws://${ip}:${wsPort}`;
+            }
+            socket = new WebSocket(wsUrl);
             
             socket.onopen = () => {
                 clearTimeout(connectTimeout);
