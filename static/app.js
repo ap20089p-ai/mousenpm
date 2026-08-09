@@ -415,29 +415,61 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 900);
     });
 
-    // Bluetooth scanner trigger
-    btnScanBluetooth.addEventListener("click", () => {
-        btnScanBluetooth.innerHTML = `<span class="status-indicator connecting-state" style="margin-right:8px;box-shadow:none;"></span> Scanning...`;
-        btnScanBluetooth.disabled = true;
-        
-        setTimeout(() => {
-            btnScanBluetooth.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><circle cx="12" cy="12" r="10"></circle><line x1="22" y1="12" x2="18" y2="12"></line><line x1="6" y1="12" x2="2" y2="12"></line><line x1="12" y1="6" x2="12" y2="2"></line><line x1="12" y1="22" x2="12" y2="18"></line></svg> Scan Devices`;
-            btnScanBluetooth.disabled = false;
-            showToast("Scan complete. 2 Bluetooth PCs found.");
-        }, 1200);
-    });
+    // Real Web Bluetooth Scanner & PAN Network Handler
+    if (btnScanBluetooth) {
+        btnScanBluetooth.addEventListener("click", async () => {
+            if ("bluetooth" in navigator) {
+                try {
+                    btnScanBluetooth.innerHTML = `<span class="status-indicator connecting-state" style="margin-right:8px;box-shadow:none;"></span> Scanning Nearby Bluetooth...`;
+                    btnScanBluetooth.disabled = true;
 
-    bluetoothDevices.forEach(device => {
+                    // Trigger browser native Web Bluetooth pairing picker
+                    const device = await navigator.bluetooth.requestDevice({
+                        acceptAllDevices: true
+                    });
+
+                    if (device) {
+                        lblDeviceTitle.textContent = device.name || "Bluetooth Device";
+                        lblDeviceAddress.textContent = "Direct Bluetooth Pair";
+                        isSimulatorMode = true;
+                        updateConnectionUI("simulated");
+                        showToast(`Paired with ${device.name || "Bluetooth Device"}!`);
+                        navigateTo("screen-mouse");
+                    }
+                } catch (err) {
+                    if (err.name !== "NotFoundError") {
+                        showToast("Bluetooth prompt cancelled or not granted.");
+                    }
+                } finally {
+                    btnScanBluetooth.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"></path></svg> Scan Bluetooth Devices`;
+                    btnScanBluetooth.disabled = false;
+                }
+            } else {
+                showToast("Web Bluetooth API is not supported in this browser. Use Bluetooth Tethering instead!");
+            }
+        });
+    }
+
+    const btnConnectBtPan = document.getElementById("btn-connect-bt-pan");
+    if (btnConnectBtPan) {
+        btnConnectBtPan.addEventListener("click", () => {
+            // Connect to the PC's Bluetooth adapter IP
+            const btIp = "169.254.205.112";
+            updateConnectionUI("connecting");
+            showToast("Connecting via Bluetooth Network...");
+            connectToServer(btIp, "5001", inputPin.value.trim());
+        });
+    }
+
+    // Bluetooth devices list items
+    const btItems = document.querySelectorAll("#bt-device-list .device-item");
+    btItems.forEach(device => {
         device.addEventListener("click", () => {
-            const name = device.getAttribute("data-name");
-            const addr = device.getAttribute("data-ip");
-            
+            const name = device.getAttribute("data-name") || "Windows PC (Bluetooth)";
+            const addr = device.getAttribute("data-ip") || "169.254.205.112";
             lblDeviceTitle.textContent = name;
             lblDeviceAddress.textContent = addr;
-            isSimulatorMode = true;
-            updateConnectionUI("simulated");
-            showToast(`Connected to ${name} via Bluetooth!`);
-            navigateTo("screen-mouse");
+            connectToServer(addr, "5001", inputPin.value.trim());
         });
     });
 
@@ -612,13 +644,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    btnLiveBackspace.addEventListener("click", () => {
-        sendMessage({
-            type: "keycode",
-            key: "backspace"
+    const btnLiveEnter = document.getElementById("btn-live-enter");
+    if (btnLiveEnter) {
+        btnLiveEnter.addEventListener("click", () => {
+            sendMessage({
+                type: "keycode",
+                key: "enter"
+            });
+            kbLiveInput.focus();
         });
-        kbLiveInput.focus();
-    });
+    }
+
+    if (btnLiveBackspace) {
+        btnLiveBackspace.addEventListener("click", () => {
+            sendMessage({
+                type: "keycode",
+                key: "backspace"
+            });
+            kbLiveInput.focus();
+        });
+    }
 
     // Tool 2: Desktop TextPad (Multi-line block sender)
     btnSendTextpad.addEventListener("click", () => {

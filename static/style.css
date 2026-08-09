@@ -1476,28 +1476,42 @@ input:checked + .slider-round:before {
 }
 
 /* ================= Dedicated Keyboard & TextPad Screen ================= */
+#screen-keyboard {
+    background-color: var(--bg-color);
+}
+
 .kb-color-box {
-    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(34, 160, 255, 0.2));
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(34, 160, 255, 0.25));
     color: var(--color-cyan);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
 }
 
 .kb-content-area {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
+    padding: 16px;
+    padding-bottom: 90px;
+    overflow-y: auto;
 }
 
 .kb-tool-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(14, 21, 36, 0.9), rgba(21, 29, 48, 0.85));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
     padding: 16px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .kb-tool-card:focus-within {
-    border-color: var(--border-hover);
-    box-shadow: 0 0 15px rgba(34, 160, 255, 0.1);
+    border-color: rgba(0, 240, 255, 0.4);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+}
+
+.live-card-highlight {
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    background: linear-gradient(145deg, rgba(8, 22, 44, 0.95), rgba(14, 21, 36, 0.9));
 }
 
 .kb-card-header {
@@ -1514,9 +1528,10 @@ input:checked + .slider-round:before {
 }
 
 .kb-title-with-badge h4 {
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 0.96rem;
+    font-weight: 700;
     color: var(--text-primary);
+    letter-spacing: -0.2px;
 }
 
 .tool-dot {
@@ -1528,96 +1543,142 @@ input:checked + .slider-round:before {
 
 .live-dot {
     background-color: var(--color-cyan);
-    box-shadow: 0 0 8px var(--color-cyan-glow);
+    box-shadow: 0 0 10px var(--color-cyan-glow);
     animation: pulseGlow 1.8s infinite;
 }
 
 @keyframes pulseGlow {
     0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.3); opacity: 0.6; }
+    50% { transform: scale(1.4); opacity: 0.5; }
 }
 
 .pad-dot {
     background-color: var(--color-accent);
-    box-shadow: 0 0 8px var(--color-accent-glow);
+    box-shadow: 0 0 10px var(--color-accent-glow);
 }
 
 .key-dot {
-    background-color: #a855f7;
-    box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+    background-color: #c084fc;
+    box-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
 }
 
 .live-status-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-cyan);
+    background-color: rgba(0, 240, 255, 0.12);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.keypad-helper-badge {
     font-size: 0.7rem;
     font-weight: 600;
-    color: var(--color-cyan);
-    background-color: rgba(0, 240, 255, 0.1);
+    color: #c084fc;
+    background-color: rgba(192, 132, 252, 0.12);
     padding: 3px 8px;
     border-radius: 12px;
-    border: 1px solid rgba(0, 240, 255, 0.25);
+    border: 1px solid rgba(192, 132, 252, 0.25);
 }
 
 .kb-tool-desc {
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     margin-bottom: 12px;
-    line-height: 1.35;
+    line-height: 1.4;
 }
 
+/* Tool 1: Live Input Box Row */
 .live-input-box-wrapper {
     display: flex;
     align-items: center;
+    gap: 8px;
     background-color: var(--bg-input);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 4px 8px 4px 14px;
-    transition: all 0.2s ease;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 4px 6px 4px 12px;
+    transition: all 0.25s ease;
 }
 
 .live-input-box-wrapper:focus-within {
     border-color: var(--color-cyan);
-    box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+    background-color: rgba(10, 20, 38, 0.95);
+}
+
+.live-input-icon {
+    color: var(--color-cyan);
+    flex-shrink: 0;
 }
 
 .live-input-box-wrapper input {
     flex: 1;
+    min-width: 0;
     background: transparent;
     border: none;
     outline: none;
-    color: var(--text-primary);
+    color: #ffffff;
     font-family: var(--font-main);
     font-size: 0.95rem;
+    font-weight: 500;
     padding: 10px 0;
 }
 
-.kb-quick-backspace-btn {
-    background: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: var(--color-danger);
-    width: 38px;
-    height: 38px;
+.live-input-box-wrapper input::placeholder {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.kb-quick-action-btn {
+    border: none;
+    font-family: var(--font-main);
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 8px 12px;
     border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     transition: all 0.15s ease;
+    user-select: none;
 }
 
-.kb-quick-backspace-btn:active {
+.kb-enter-pill {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(34, 160, 255, 0.35));
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    color: var(--color-cyan);
+}
+
+.kb-enter-pill:active {
     transform: scale(0.92);
-    background: rgba(239, 68, 68, 0.25);
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.4), rgba(34, 160, 255, 0.5));
 }
 
+.kb-backspace-pill {
+    background: rgba(239, 68, 68, 0.18);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #f87171;
+}
+
+.kb-backspace-pill:active {
+    transform: scale(0.92);
+    background: rgba(239, 68, 68, 0.3);
+}
+
+/* Tool 2: Desktop TextPad */
 .textpad-clear-link {
     background: transparent;
     border: none;
     color: var(--text-muted);
     font-family: var(--font-main);
     font-size: 0.78rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: color 0.2s ease;
+    padding: 2px 6px;
 }
 
 .textpad-clear-link:hover {
@@ -1631,99 +1692,232 @@ input:checked + .slider-round:before {
 .textpad-wrapper textarea {
     width: 100%;
     background-color: var(--bg-input);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
     padding: 12px;
     color: var(--text-primary);
     font-family: var(--font-main);
     font-size: 0.9rem;
-    resize: vertical;
-    min-height: 80px;
+    line-height: 1.4;
+    resize: none;
+    min-height: 85px;
     outline: none;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
 }
 
 .textpad-wrapper textarea:focus {
     border-color: var(--color-accent);
-    box-shadow: 0 0 12px rgba(34, 160, 255, 0.25);
+    box-shadow: 0 0 16px rgba(34, 160, 255, 0.3);
+    background-color: rgba(10, 20, 38, 0.95);
 }
 
 .send-textpad-btn {
     width: 100%;
     margin-top: 0;
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    box-shadow: 0 4px 15px rgba(0, 198, 255, 0.35);
+    font-weight: 700;
 }
 
-/* ================= Keycode Buttons Grid ================= */
+.send-textpad-btn:hover {
+    box-shadow: 0 6px 20px rgba(0, 198, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+/* Tool 3: Keypad & Modifiers */
+.keypad-card {
+    padding-bottom: 18px;
+}
+
+.keypad-section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin: 12px 0 8px 0;
+}
+
 .keycode-grid {
     display: grid;
     gap: 8px;
-    margin-bottom: 8px;
 }
 
-.keycode-grid.row-1 {
+.grid-5 {
     grid-template-columns: repeat(5, 1fr);
 }
 
-.keycode-grid.row-arrows {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    margin: 8px 0;
-}
-
-.arrow-subrow {
-    display: flex;
-    gap: 8px;
-}
-
-.keycode-grid.row-shortcuts {
+.grid-4 {
     grid-template-columns: repeat(4, 1fr);
 }
 
 .keycode-btn {
-    background: rgba(17, 26, 45, 0.8);
-    border: 1px solid var(--border-color);
+    background: rgba(17, 26, 45, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.09);
     color: var(--text-primary);
     font-family: var(--font-main);
     font-size: 0.82rem;
-    font-weight: 600;
-    padding: 10px 4px;
-    border-radius: 10px;
+    font-weight: 700;
+    padding: 12px 4px;
+    border-radius: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.15s ease;
     user-select: none;
+    min-height: 44px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .keycode-btn:hover {
     background-color: var(--bg-card-hover);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .keycode-btn:active,
 .keycode-btn.pressed {
-    transform: scale(0.94);
-    background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(34, 160, 255, 0.3));
+    transform: scale(0.92);
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.35), rgba(34, 160, 255, 0.45));
     border-color: var(--color-cyan);
-    box-shadow: 0 0 10px var(--color-cyan-glow);
+    box-shadow: 0 0 14px var(--color-cyan-glow);
     color: #ffffff;
 }
 
-.action-key {
-    font-size: 0.8rem;
-}
-
-.arrow-key {
-    width: 54px;
-    height: 40px;
-    font-size: 1.1rem;
-    color: var(--color-cyan);
-}
+/* Action key nuances */
+.esc-btn { color: #f87171; }
+.tab-btn-key { color: #60a5fa; }
+.space-btn { color: #34d399; }
+.backspace-btn { color: #fb923c; font-size: 0.78rem; }
+.enter-btn { color: var(--color-cyan); font-weight: 800; font-size: 0.8rem; }
 
 .shortcut-key {
-    font-size: 0.76rem;
     color: var(--color-accent);
+    font-size: 0.82rem;
+    background: rgba(34, 160, 255, 0.08);
+    border-color: rgba(34, 160, 255, 0.2);
 }
+
+.shortcut-key:hover {
+    background: rgba(34, 160, 255, 0.18);
+}
+
+/* Navigation Arrows & D-Pad */
+.nav-arrows-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.nav-side-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.nav-sub-btn {
+    font-size: 0.78rem;
+    padding: 8px 4px;
+    min-height: 36px;
+    color: #e2e8f0;
+}
+
+.dpad-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1.3;
+}
+
+.dpad-horizontal {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+}
+
+.arrow-btn {
+    width: 52px;
+    height: 42px;
+    font-size: 1.15rem;
+    color: var(--color-cyan);
+    background: rgba(0, 240, 255, 0.08);
+    border-color: rgba(0, 240, 255, 0.25);
+    padding: 0;
+}
+
+.arrow-btn:active,
+.arrow-btn.pressed {
+    background: var(--color-cyan);
+    color: #040810;
+    box-shadow: 0 0 16px var(--color-cyan-glow);
+}
+
+/* ================= Bluetooth Tab Styling ================= */
+.bt-action-box {
+    margin-bottom: 12px;
+}
+
+.bt-tethering-card {
+    background: linear-gradient(135deg, rgba(14, 21, 36, 0.9), rgba(21, 29, 48, 0.9));
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.bt-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.bt-badge-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(0, 240, 255, 0.12);
+    color: var(--color-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.bt-card-header strong {
+    font-size: 0.92rem;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 3px;
+}
+
+.bt-card-header p {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+.bt-connect-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(34, 160, 255, 0.2));
+    border: 1px solid var(--color-cyan);
+    color: var(--color-cyan);
+    font-weight: 600;
+    padding: 11px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bt-connect-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(34, 160, 255, 0.35));
+    box-shadow: 0 0 12px var(--color-cyan-glow);
+}
+
+
