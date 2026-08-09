@@ -1299,3 +1299,431 @@ input:checked + .slider-round:before {
 .nav-item:active {
     transform: scale(0.95);
 }
+
+/* ================= PWA Install & Header Badges ================= */
+.install-pwa-btn {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(34, 160, 255, 0.2));
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    color: var(--color-cyan);
+    font-family: var(--font-main);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.install-pwa-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(34, 160, 255, 0.35));
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+}
+
+.install-pwa-btn.hidden {
+    display: none !important;
+}
+
+/* ================= Dual Connection Mode Options ================= */
+.dual-mode-banner {
+    background: linear-gradient(135deg, rgba(14, 21, 36, 0.8), rgba(21, 29, 48, 0.9));
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.mode-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-cyan);
+    background-color: rgba(0, 240, 255, 0.12);
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+.mode-subtitle {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.3;
+}
+
+.option-header-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 12px 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.option-header-badge.option-2 {
+    margin-top: 18px;
+}
+
+.badge-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-cyan), var(--color-accent));
+    color: #040810;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 8px var(--color-cyan-glow);
+}
+
+.input-row-dual {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 12px;
+}
+
+.pin-wrapper input {
+    font-family: monospace;
+    letter-spacing: 2px;
+    font-weight: 700;
+    color: var(--color-cyan);
+}
+
+.option-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0 10px 0;
+}
+
+.option-divider::before,
+.option-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.option-divider span {
+    padding: 0 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.instant-access-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(34, 160, 255, 0.1), rgba(0, 240, 255, 0.05));
+    border: 1px solid rgba(34, 160, 255, 0.35);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    margin-top: 8px;
+}
+
+.instant-access-btn:hover {
+    background: linear-gradient(135deg, rgba(34, 160, 255, 0.2), rgba(0, 240, 255, 0.12));
+    border-color: var(--color-cyan);
+    box-shadow: 0 6px 20px rgba(0, 240, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.instant-access-btn:active {
+    transform: scale(0.98);
+}
+
+.instant-btn-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(34, 160, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-cyan);
+    flex-shrink: 0;
+}
+
+.instant-btn-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.instant-btn-text strong {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.instant-btn-text span {
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+}
+
+/* ================= Dedicated Keyboard & TextPad Screen ================= */
+.kb-color-box {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(34, 160, 255, 0.2));
+    color: var(--color-cyan);
+}
+
+.kb-content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.kb-tool-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kb-tool-card:focus-within {
+    border-color: var(--border-hover);
+    box-shadow: 0 0 15px rgba(34, 160, 255, 0.1);
+}
+
+.kb-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.kb-title-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kb-title-with-badge h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tool-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.live-dot {
+    background-color: var(--color-cyan);
+    box-shadow: 0 0 8px var(--color-cyan-glow);
+    animation: pulseGlow 1.8s infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.6; }
+}
+
+.pad-dot {
+    background-color: var(--color-accent);
+    box-shadow: 0 0 8px var(--color-accent-glow);
+}
+
+.key-dot {
+    background-color: #a855f7;
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}
+
+.live-status-pill {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-cyan);
+    background-color: rgba(0, 240, 255, 0.1);
+    padding: 3px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 240, 255, 0.25);
+}
+
+.kb-tool-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.35;
+}
+
+.live-input-box-wrapper {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 4px 8px 4px 14px;
+    transition: all 0.2s ease;
+}
+
+.live-input-box-wrapper:focus-within {
+    border-color: var(--color-cyan);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+}
+
+.live-input-box-wrapper input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 0.95rem;
+    padding: 10px 0;
+}
+
+.kb-quick-backspace-btn {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--color-danger);
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.kb-quick-backspace-btn:active {
+    transform: scale(0.92);
+    background: rgba(239, 68, 68, 0.25);
+}
+
+.textpad-clear-link {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-main);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.textpad-clear-link:hover {
+    color: var(--color-danger);
+}
+
+.textpad-wrapper {
+    margin-bottom: 12px;
+}
+
+.textpad-wrapper textarea {
+    width: 100%;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.textpad-wrapper textarea:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 12px rgba(34, 160, 255, 0.25);
+}
+
+.send-textpad-btn {
+    width: 100%;
+    margin-top: 0;
+}
+
+/* ================= Keycode Buttons Grid ================= */
+.keycode-grid {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.keycode-grid.row-1 {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.keycode-grid.row-arrows {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0;
+}
+
+.arrow-subrow {
+    display: flex;
+    gap: 8px;
+}
+
+.keycode-grid.row-shortcuts {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.keycode-btn {
+    background: rgba(17, 26, 45, 0.8);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 10px 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.keycode-btn:hover {
+    background-color: var(--bg-card-hover);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.keycode-btn:active,
+.keycode-btn.pressed {
+    transform: scale(0.94);
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(34, 160, 255, 0.3));
+    border-color: var(--color-cyan);
+    box-shadow: 0 0 10px var(--color-cyan-glow);
+    color: #ffffff;
+}
+
+.action-key {
+    font-size: 0.8rem;
+}
+
+.arrow-key {
+    width: 54px;
+    height: 40px;
+    font-size: 1.1rem;
+    color: var(--color-cyan);
+}
+
+.shortcut-key {
+    font-size: 0.76rem;
+    color: var(--color-accent);
+}

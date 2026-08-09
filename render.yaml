@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: virtual-mouse-ui
+    runtime: static
+    buildCommand: "echo 'No build step required'"
+    staticPublishPath: ./static
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

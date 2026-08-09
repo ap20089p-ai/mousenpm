@@ -1,0 +1,46 @@
+{
+  "name": "Virtual Mouse & Keyboard",
+  "short_name": "VirtualMouse",
+  "description": "Wireless Mouse, Live Keyboard & Remote Desktop Controller for PC",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#080d16",
+  "theme_color": "#080d16",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Mouse Trackpad",
+      "short_name": "Mouse",
+      "description": "Open Touchpad Mouse Control",
+      "url": "./index.html#screen-mouse"
+    },
+    {
+      "name": "Keyboard & TextPad",
+      "short_name": "Keyboard",
+      "description": "Open Keyboard & TextPad typing tool",
+      "url": "./index.html#screen-keyboard"
+    }
+  ]
+}

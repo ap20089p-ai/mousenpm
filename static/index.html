@@ -2,13 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Virtual Mouse - Remote Controller</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Virtual Mouse & Keyboard - Remote Controller</title>
+    
+    <!-- PWA & Mobile Web Meta Tags -->
+    <meta name="theme-color" content="#080d16">
+    <meta name="description" content="Turn your phone into a wireless mouse, live keyboard, and desktop controller for PC.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VirtualMouse">
+    <link rel="manifest" href="manifest.json?v=2.5">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2.5">
 </head>
 <body class="dark-theme">
     <!-- Main Application Container -->
@@ -21,7 +32,7 @@
                     <div class="ripple ripple-1"></div>
                     <div class="ripple ripple-2"></div>
                     <div class="ripple ripple-3"></div>
-                    <!-- Glowing Mouse SVG -->
+                    <!-- Glowing Mouse & Keyboard SVG -->
                     <svg class="glowing-mouse-svg" viewBox="0 0 100 150" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="25" y="10" width="50" height="100" rx="25" stroke="url(#mouse-gradient)" stroke-width="4" />
                         <line x1="50" y1="10" x2="50" y2="50" stroke="url(#mouse-gradient)" stroke-width="4" stroke-linecap="round"/>
@@ -30,7 +41,7 @@
                     </svg>
                 </div>
                 <h1 class="splash-title">Virtual Mouse</h1>
-                <p class="splash-tagline">Turn your phone into a wireless mouse</p>
+                <p class="splash-tagline">Wireless Mouse & Live Desktop Keyboard</p>
                 <div class="carousel-dots">
                     <span class="dot"></span>
                     <span class="dot active"></span>
@@ -42,18 +53,24 @@
         <!-- ================= 2. Connection Screen ================= -->
         <section id="screen-home" class="screen">
             <header class="app-header">
-                <button class="icon-btn header-menu-btn" id="btn-hamburger">
-                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                <button class="icon-btn header-menu-btn" id="btn-hamburger" title="Menu">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
                 <h2>Connect to Device</h2>
-                <button class="icon-btn header-help-btn" id="btn-help">
-                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <!-- PWA Install Button -->
+                <button class="install-pwa-btn hidden" id="btn-install-pwa" title="Install App on Phone">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Install</span>
                 </button>
             </header>
             
             <div class="scroll-content">
-                <p class="section-label">Choose connection method</p>
-                
+                <!-- Dual Mode Quick Options Card -->
+                <div class="dual-mode-banner">
+                    <div class="mode-badge">Network Pairing Ready</div>
+                    <p class="mode-subtitle">Choose how to start controlling your PC:</p>
+                </div>
+
                 <!-- Connection Tabs -->
                 <div class="connection-tabs">
                     <button class="tab-btn active" data-tab="wifi">
@@ -72,27 +89,44 @@
 
                 <!-- Tab Panel: WiFi -->
                 <div id="panel-wifi" class="tab-panel active">
+                    
+                    <!-- Option 1: IP + Port + PIN Form -->
+                    <div class="option-header-badge">
+                        <span class="badge-num">1</span>
+                        <span>Connect with IP & Connect PIN</span>
+                    </div>
+
                     <div class="input-group">
-                        <label>IP Address</label>
+                        <label>Desktop IP Address</label>
                         <div class="input-wrapper">
                             <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="input-icon"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                            <input type="text" id="ip-address" placeholder="192.168.1.5">
+                            <input type="text" id="ip-address" placeholder="e.g. 10.145.195.86">
                         </div>
                     </div>
                     
-                    <div class="input-group">
-                        <label>Port Number</label>
-                        <div class="input-wrapper">
-                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="input-icon"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line><line x1="6" y1="15" x2="6.01" y2="15" stroke-width="3"></line><line x1="10" y1="15" x2="10.01" y2="15" stroke-width="3"></line></svg>
-                            <input type="text" id="port-number" placeholder="5000" value="5000">
+                    <div class="input-row-dual">
+                        <div class="input-group">
+                            <label>Port</label>
+                            <div class="input-wrapper">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="input-icon"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                                <input type="text" id="port-number" placeholder="5001" value="5001">
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Connect PIN</label>
+                            <div class="input-wrapper pin-wrapper">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="input-icon"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <input type="text" id="connect-pin" placeholder="e.g. 1425" maxlength="6">
+                            </div>
                         </div>
                     </div>
 
                     <div class="input-group">
                         <label>Device Name (Optional)</label>
                         <div class="input-wrapper">
-                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="input-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            <input type="text" id="device-name" placeholder="My Laptop" value="My Laptop">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="input-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            <input type="text" id="device-name" placeholder="My PC" value="My PC">
                         </div>
                     </div>
 
@@ -104,7 +138,29 @@
 
                     <button class="primary-btn connect-btn" id="btn-connect-wifi">
                         <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                        <span id="txt-connect-btn">Connect Now</span>
+                        <span id="txt-connect-btn">Start & Connect</span>
+                    </button>
+
+                    <!-- Divider -->
+                    <div class="option-divider">
+                        <span>OR</span>
+                    </div>
+
+                    <!-- Option 2: Instant Mouse & Keycode UI Button -->
+                    <div class="option-header-badge option-2">
+                        <span class="badge-num">2</span>
+                        <span>Direct Mouse & Keycode UI</span>
+                    </div>
+                    
+                    <button class="secondary-btn instant-access-btn" id="btn-open-direct">
+                        <div class="instant-btn-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        </div>
+                        <div class="instant-btn-text">
+                            <strong>Open Mouse & Keycode UI</strong>
+                            <span>Access all tools & test controls directly</span>
+                        </div>
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
                 </div>
 
@@ -126,26 +182,6 @@
                             </div>
                             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </div>
-                        <div class="device-item" data-name="HP Pavilion" data-ip="HP-Laptop (Bluetooth)">
-                            <div class="device-info">
-                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="device-icon"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="17" x2="12" y2="20"></line></svg>
-                                <div>
-                                    <p class="dev-name">HP Pavilion</p>
-                                    <p class="dev-addr">98:D3:31:FD:68:21</p>
-                                </div>
-                            </div>
-                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </div>
-                        <div class="device-item" data-name="Lenovo ThinkPad" data-ip="ThinkPad (Bluetooth)">
-                            <div class="device-info">
-                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="device-icon"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="17" x2="12" y2="20"></line></svg>
-                                <div>
-                                    <p class="dev-name">Lenovo ThinkPad</p>
-                                    <p class="dev-addr">AC:23:3F:56:13:7A</p>
-                                </div>
-                            </div>
-                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </div>
                     </div>
                 </div>
 
@@ -156,7 +192,7 @@
                             <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="usb-plug-svg"><rect x="6" y="2" width="12" height="6" rx="1"></rect><rect x="9" y="16" width="6" height="6" rx="1"></rect><line x1="10" y1="8" x2="10" y2="16"></line><line x1="14" y1="8" x2="14" y2="16"></line></svg>
                         </div>
                         <h3>Connect via USB cable</h3>
-                        <p>Plug in your mobile device to your computer using a USB cable. Make sure USB Debugging is enabled (for Android) or Trust This Computer is selected (for iOS) to establish a connection.</p>
+                        <p>Plug in your mobile device to your computer. Make sure USB Tethering or Debugging is active.</p>
                         <button class="primary-btn connect-btn" id="btn-connect-usb">
                             Connect USB
                         </button>
@@ -173,19 +209,16 @@
                         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="17" x2="12" y2="20"></line></svg>
                     </div>
                     <div>
-                        <h3 id="lbl-device-title">My Laptop</h3>
-                        <p id="lbl-device-address">192.168.1.5:5000</p>
+                        <h3 id="lbl-device-title">My PC</h3>
+                        <p id="lbl-device-address">10.145.195.86:5001</p>
                     </div>
                 </div>
                 
                 <div class="header-right-meta">
                     <div class="connection-status-pill">
                         <span class="status-indicator connect-state"></span>
-                        <span>Connected</span>
+                        <span id="lbl-pill-state">Ready</span>
                     </div>
-                    <button class="icon-btn" id="btn-mouse-more">
-                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                    </button>
                 </div>
             </header>
 
@@ -244,53 +277,143 @@
                     </div>
                 </div>
 
-                <!-- Keyboard and scroll toggles -->
+                <!-- Keyboard Quick Switch Card -->
                 <div class="mouse-aux-grid">
-                    <div class="aux-card scroll-mode-card">
-                        <div class="card-text">
-                            <p class="card-title">Scroll Mode</p>
-                            <p class="card-subtitle" id="lbl-scroll-state">Enabled</p>
-                        </div>
-                        <label class="switch-toggle">
-                            <input type="checkbox" id="toggle-scroll-mode" checked>
-                            <span class="slider-round"></span>
-                        </label>
-                    </div>
-
-                    <button class="aux-card keyboard-card-btn" id="btn-keyboard-trigger">
+                    <button class="aux-card keyboard-card-btn" id="btn-quick-keyboard">
                         <div class="keyboard-icon-box">
                             <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line><line x1="14" y1="8" x2="14.01" y2="8"></line><line x1="18" y1="8" x2="18.01" y2="8"></line><line x1="6" y1="12" x2="6.01" y2="12"></line><line x1="10" y1="12" x2="10.01" y2="12"></line><line x1="14" y1="12" x2="14.01" y2="12"></line><line x1="18" y1="12" x2="18.01" y2="12"></line><line x1="7" y1="16" x2="17" y2="16"></line></svg>
                         </div>
-                        <span class="keyboard-label">Keyboard</span>
+                        <div class="aux-card-info">
+                            <span class="card-title">Live Keyboard & TextPad</span>
+                            <span class="card-subtitle">Open typing & keycodes tool →</span>
+                        </div>
                     </button>
-                </div>
-            </div>
-
-            <!-- Modal Virtual Keyboard Overlay -->
-            <div class="keyboard-overlay" id="overlay-keyboard">
-                <div class="keyboard-sheet">
-                    <div class="keyboard-sheet-header">
-                        <h4>Text Entry Transmitter</h4>
-                        <button class="close-overlay-btn" id="btn-close-keyboard">Done</button>
-                    </div>
-                    <p class="kb-helper-text">Characters typed here are sent immediately to your computer.</p>
-                    <div class="kb-input-row">
-                        <input type="text" id="kb-hidden-input" placeholder="Type here to send text...">
-                        <button class="kb-action-key" id="btn-kb-backspace">Backspace</button>
-                        <button class="kb-action-key" id="btn-kb-enter">Enter</button>
-                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- ================= 4. Settings Screen ================= -->
+        <!-- ================= 4. Dedicated Keyboard & TextPad Screen ================= -->
+        <section id="screen-keyboard" class="screen">
+            <header class="app-header active-header">
+                <div class="header-dev-desc">
+                    <div class="connected-icon-box kb-color-box">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line><line x1="14" y1="8" x2="14.01" y2="8"></line><line x1="18" y1="8" x2="18.01" y2="8"></line></svg>
+                    </div>
+                    <div>
+                        <h3>Live Keyboard & TextPad</h3>
+                        <p id="lbl-kb-status">Ready to transmit</p>
+                    </div>
+                </div>
+                
+                <div class="header-right-meta">
+                    <button class="icon-btn" id="btn-clear-all-text" title="Clear All Text">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="scroll-content kb-content-area">
+                
+                <!-- Tool 1: Live Real-Time Auto-Typing -->
+                <div class="kb-tool-card live-card-highlight">
+                    <div class="kb-card-header">
+                        <div class="kb-title-with-badge">
+                            <span class="tool-dot live-dot"></span>
+                            <h4>Live Auto-Typing</h4>
+                        </div>
+                        <span class="live-status-pill" id="pill-live-transmitting">Live Stream ⚡</span>
+                    </div>
+                    <p class="kb-tool-desc">Click below and type on your phone keyboard. Every keystroke is sent directly to your PC's active window.</p>
+                    
+                    <div class="live-input-box-wrapper">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="live-input-icon"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+                        <input type="text" id="kb-live-input" placeholder="Type here to stream directly to PC..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <button class="kb-quick-action-btn kb-enter-pill" id="btn-live-enter" title="Send Enter">↵ Enter</button>
+                        <button class="kb-quick-action-btn kb-backspace-pill" id="btn-live-backspace" title="Backspace">⌫ Del</button>
+                    </div>
+                </div>
+
+                <!-- Tool 2: Desktop TextPad (Multi-line block sender) -->
+                <div class="kb-tool-card">
+                    <div class="kb-card-header">
+                        <div class="kb-title-with-badge">
+                            <span class="tool-dot pad-dot"></span>
+                            <h4>Desktop TextPad</h4>
+                        </div>
+                        <button class="textpad-clear-link" id="btn-textpad-clear">Clear Pad</button>
+                    </div>
+                    <p class="kb-tool-desc">Write or paste whole paragraphs, notes, or code to send to your PC with one tap.</p>
+                    
+                    <div class="textpad-wrapper">
+                        <textarea id="kb-textpad-input" rows="3" placeholder="Write full text, URLs, notes, or code here..."></textarea>
+                    </div>
+
+                    <button class="primary-btn send-textpad-btn" id="btn-send-textpad">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        <span>Send to Desktop TextPad</span>
+                    </button>
+                </div>
+
+                <!-- Tool 3: Virtual Keypad & Modifier Controls -->
+                <div class="kb-tool-card keypad-card">
+                    <div class="kb-card-header">
+                        <div class="kb-title-with-badge">
+                            <span class="tool-dot key-dot"></span>
+                            <h4>Keycodes & Modifiers</h4>
+                        </div>
+                        <span class="keypad-helper-badge">Touch Enabled</span>
+                    </div>
+
+                    <!-- Row 1: Common Control Keys -->
+                    <div class="keypad-section-label">Primary Actions</div>
+                    <div class="keycode-grid grid-5">
+                        <button class="keycode-btn action-key esc-btn" data-key="esc">Esc</button>
+                        <button class="keycode-btn action-key tab-btn-key" data-key="tab">Tab ⇥</button>
+                        <button class="keycode-btn action-key space-btn" data-key="space">Space ␣</button>
+                        <button class="keycode-btn action-key backspace-btn" data-key="backspace">⌫ Back</button>
+                        <button class="keycode-btn action-key enter-btn" data-key="enter">↵ Enter</button>
+                    </div>
+
+                    <!-- Row 2: PC Shortcuts -->
+                    <div class="keypad-section-label">PC Shortcuts</div>
+                    <div class="keycode-grid grid-4">
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+a">Ctrl+A</button>
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+c">Ctrl+C</button>
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+v">Ctrl+V</button>
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+z">Ctrl+Z</button>
+                    </div>
+
+                    <!-- Row 3: Navigation & Arrow D-Pad -->
+                    <div class="keypad-section-label">Navigation & Arrow Keys</div>
+                    <div class="nav-arrows-container">
+                        <div class="nav-side-buttons">
+                            <button class="keycode-btn nav-sub-btn" data-key="delete">Del ⌦</button>
+                            <button class="keycode-btn nav-sub-btn" data-key="ctrl+s">Save 💾</button>
+                            <button class="keycode-btn nav-sub-btn" data-key="ctrl+y">Redo ↷</button>
+                        </div>
+                        
+                        <div class="dpad-container">
+                            <button class="keycode-btn arrow-btn dpad-up" data-key="up" title="Up Arrow">▲</button>
+                            <div class="dpad-horizontal">
+                                <button class="keycode-btn arrow-btn dpad-left" data-key="left" title="Left Arrow">◄</button>
+                                <button class="keycode-btn arrow-btn dpad-down" data-key="down" title="Down Arrow">▼</button>
+                                <button class="keycode-btn arrow-btn dpad-right" data-key="right" title="Right Arrow">►</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= 5. Settings Screen ================= -->
         <section id="screen-settings" class="screen">
             <header class="app-header">
                 <h2>Settings</h2>
             </header>
             
             <div class="scroll-content">
-                <p class="settings-group-label">General</p>
+                <p class="settings-group-label">General Preferences</p>
                 <div class="settings-card">
                     <div class="setting-row">
                         <div class="setting-label-icon">
@@ -307,7 +430,7 @@
                         <div class="setting-slider-header">
                             <div class="setting-label-icon">
                                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                <span>Sensitivity (DPI)</span>
+                                <span>Mouse Sensitivity</span>
                             </div>
                             <span class="slider-value" id="lbl-dpi-value">Medium (1600)</span>
                         </div>
@@ -323,20 +446,20 @@
                         <div class="setting-label-icon">
                             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                             <div>
-                                <p class="sett-title">Reconnect</p>
-                                <p class="sett-desc">Reconnect to last device</p>
+                                <p class="sett-title">Quick Reconnect</p>
+                                <p class="sett-desc">Reconnect to saved IP & PIN</p>
                             </div>
                         </div>
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
                 </div>
 
-                <p class="settings-group-label">Support</p>
+                <p class="settings-group-label">Help & About</p>
                 <div class="settings-card">
                     <div class="setting-row clickable" id="btn-support-use">
                         <div class="setting-label-icon">
                             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                            <span>How to Use</span>
+                            <span>How to Connect</span>
                         </div>
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
@@ -344,7 +467,7 @@
                     <div class="setting-row clickable" id="btn-support-faq">
                         <div class="setting-label-icon">
                             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                            <span>Help & FAQ</span>
+                            <span>Troubleshooting</span>
                         </div>
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
@@ -352,31 +475,35 @@
                     <div class="setting-row" id="btn-support-about">
                         <div class="setting-label-icon">
                             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                            <span>About</span>
+                            <span>Version</span>
                         </div>
-                        <span class="about-version">v1.0.0</span>
+                        <span class="about-version">v2.5 (PWA Ready)</span>
                     </div>
                 </div>
 
                 <button class="disconnect-btn-action" id="btn-action-disconnect">
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
-                    Disconnect
+                    Disconnect Device
                 </button>
             </div>
         </section>
 
-        <!-- ================= Bottom Navigation Bar ================= -->
+        <!-- ================= Bottom Navigation Bar (4 Tabs) ================= -->
         <nav class="bottom-navbar" id="main-bottom-nav">
             <button class="nav-item active" data-screen="screen-home">
-                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                <span>Home</span>
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span>Connect</span>
             </button>
             <button class="nav-item" data-screen="screen-mouse">
-                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><rect x="5" y="2" width="14" height="20" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="2" x2="12" y2="10" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="6" r="1.5" fill="currentColor"/></svg>
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><rect x="5" y="2" width="14" height="20" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="2" x2="12" y2="10" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="6" r="1.5" fill="currentColor"/></svg>
                 <span>Mouse</span>
             </button>
+            <button class="nav-item" data-screen="screen-keyboard">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line><line x1="14" y1="8" x2="14.01" y2="8"></line><line x1="18" y1="8" x2="18.01" y2="8"></line><line x1="6" y1="12" x2="6.01" y2="12"></line><line x1="10" y1="12" x2="10.01" y2="12"></line><line x1="14" y1="12" x2="14.01" y2="12"></line><line x1="18" y1="12" x2="18.01" y2="12"></line><line x1="7" y1="16" x2="17" y2="16"></line></svg>
+                <span>Keyboard</span>
+            </button>
             <button class="nav-item" data-screen="screen-settings">
-                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 <span>Settings</span>
             </button>
         </nav>
@@ -393,7 +520,7 @@
 
     </div>
 
-    <!-- Application Script -->
-    <script src="app.js"></script>
+    <!-- Application Script with Cache Buster -->
+    <script src="app.js?v=2.5"></script>
 </body>
 </html>
