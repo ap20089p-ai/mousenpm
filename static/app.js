@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let sensitivity = 1.1; // DPI multiplier (1600 = 1.1x)
     let scrollSensitivity = 0.8;
     let deferredPrompt = null;
+    let heartbeatTimer = null;
+    let autoReconnectTimer = null;
+    let isUserDisconnect = false;
 
     // Trackpad gesture variables
     let lastX = 0;
@@ -264,12 +267,48 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // --- Keep-Alive Ping & Auto-Reconnect Helpers ---
+    function startHeartbeat() {
+        stopHeartbeat();
+        heartbeatTimer = setInterval(() => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: "ping" }));
+            }
+        }, 10000); // Send keep-alive ping every 10s
+    }
+
+    function stopHeartbeat() {
+        if (heartbeatTimer) {
+            clearInterval(heartbeatTimer);
+            heartbeatTimer = null;
+        }
+    }
+
+    function scheduleAutoReconnect(ip, port, pin) {
+        if (autoReconnectTimer) clearTimeout(autoReconnectTimer);
+        autoReconnectTimer = setTimeout(() => {
+            if (!isConnected && !isUserDisconnect) {
+                connectToServer(ip, port, pin);
+            }
+        }, 3000);
+    }
+
     function connectToServer(ip, port, pin) {
         // Auto-fix: If opened on mobile and IP was set to 127.0.0.1, use the actual PC host IP
         const currentHost = window.location.hostname;
         if ((!ip || ip === "127.0.0.1" || ip === "localhost") && currentHost && currentHost !== "localhost" && currentHost !== "127.0.0.1") {
             ip = currentHost;
             if (inputIp) inputIp.value = ip;
+        }
+
+        if (autoReconnectTimer) {
+            clearTimeout(autoReconnectTimer);
+            autoReconnectTimer = null;
+        }
+        stopHeartbeat();
+        if (socket) {
+            try { socket.close(); } catch (e) {}
+            socket = null;
         }
 
         updateConnectionUI("connecting");
@@ -314,6 +353,8 @@ document.addEventListener("DOMContentLoaded", () => {
                             lblDeviceAddress.textContent = `${ip}:${wsPort}`;
                             
                             updateConnectionUI("connected");
+                            startHeartbeat();
+                            isUserDisconnect = false;
                             showToast("Connected & Paired with PC successfully!");
                             
                             setTimeout(() => {
@@ -335,13 +376,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
             socket.onclose = () => {
                 clearTimeout(connectTimeout);
+                stopHeartbeat();
                 if (isConnected) {
-                    showToast("Connection to PC closed.");
                     updateConnectionUI("disconnected");
+                    if (!isUserDisconnect) {
+                        showToast("Connection lost. Reconnecting...");
+                        scheduleAutoReconnect(ip, wsPort, pin);
+                    } else {
+                        showToast("Connection to PC closed.");
+                    }
                 }
             };
         } catch (e) {
             clearTimeout(connectTimeout);
+            stopHeartbeat();
             startSimulatorFallback("Cannot connect directly. Running Interactive Mode.");
         }
     }
@@ -474,8 +522,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function disconnectDevice() {
+        isUserDisconnect = true;
+        if (autoReconnectTimer) {
+            clearTimeout(autoReconnectTimer);
+            autoReconnectTimer = null;
+        }
+        stopHeartbeat();
         if (socket) {
-            socket.close();
+            try { socket.close(1000, "User disconnected"); } catch (e) {}
             socket = null;
         }
         updateConnectionUI("disconnected");
@@ -484,6 +538,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     btnDisconnect.addEventListener("click", disconnectDevice);
+
+    // --- Automatic Disconnect on Tab Close ---
+    function handleTabClose() {
+        isUserDisconnect = true;
+        if (autoReconnectTimer) clearTimeout(autoReconnectTimer);
+        stopHeartbeat();
+        if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+            try {
+                socket.close(1000, "Tab closed");
+            } catch (e) {}
+            socket = null;
+        }
+    }
+
+    window.addEventListener("beforeunload", handleTabClose);
+    window.addEventListener("pagehide", handleTabClose);
 
     // ================= Trackpad Gestures Handler =================
 
