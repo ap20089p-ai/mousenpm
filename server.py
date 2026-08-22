@@ -19,7 +19,7 @@ for logger_name in ("websockets", "websockets.server", "websockets.protocol", "w
 PORT_HTTP = 5000
 PORT_WS = 5001
 
-# Locate static directory relative to this script
+# Locate static directory relative to this file
 DIRECTORY_STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
 os.makedirs(DIRECTORY_STATIC, exist_ok=True)
 
@@ -29,8 +29,8 @@ for arg in sys.argv:
     if arg.startswith("--pin="):
         SERVER_PIN = arg.split("=")[1].strip()
 
-# --- Custom Silent Multi-Threaded HTTP Server ---
-class StaticHTTPHandler(http.server.SimpleHTTPRequestHandler):
+# --- Custom Multi-Frontend HTTP Request Handler ---
+class UnifiedHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY_STATIC, **kwargs)
 
@@ -38,11 +38,43 @@ class StaticHTTPHandler(http.server.SimpleHTTPRequestHandler):
         pass # Suppress HTTP access logs for clean console
 
     def end_headers(self):
-        # Enable CORS and disable cache on dynamic fetches
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         super().end_headers()
+
+    def do_GET(self):
+        global SERVER_PIN
+        url_path = self.path.split('?')[0]
+
+        # API Endpoints
+        if url_path == '/api/info':
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            data = {
+                "status": "running",
+                "ip": get_local_ip(),
+                "http_port": PORT_HTTP,
+                "ws_port": PORT_WS,
+                "pin": SERVER_PIN
+            }
+            self.wfile.write(json.dumps(data).encode('utf-8'))
+            return
+        elif url_path == '/api/pin/regen':
+            SERVER_PIN = str(random.randint(1000, 9999))
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            data = {
+                "status": "success",
+                "pin": SERVER_PIN
+            }
+            self.wfile.write(json.dumps(data).encode('utf-8'))
+            return
+
+        super().do_GET()
 
     def handle_one_request(self):
         try:
@@ -61,7 +93,6 @@ class QuietThreadingServer(socketserver.ThreadingTCPServer):
     daemon_threads = True
 
     def handle_error(self, request, client_address):
-        # Suppress common network drops (ConnectionResetError WinError 10054, BrokenPipe, etc.)
         exc_type, _, _ = sys.exc_info()
         if exc_type in (ConnectionResetError, ConnectionAbortedError, BrokenPipeError, TimeoutError, socket.error):
             return
@@ -69,7 +100,7 @@ class QuietThreadingServer(socketserver.ThreadingTCPServer):
 
 def run_http_server():
     try:
-        with QuietThreadingServer(("", PORT_HTTP), StaticHTTPHandler) as httpd:
+        with QuietThreadingServer(("", PORT_HTTP), UnifiedHTTPHandler) as httpd:
             httpd.serve_forever()
     except Exception as e:
         print(f"HTTP Server Notice: {e}")
@@ -161,7 +192,6 @@ def type_text(text):
             press_vk(VK_TAB)
             continue
         val = ord(char)
-        # Unicode key down & up
         user32.keybd_event(0, val, KEYEVENTF_UNICODE, 0)
         user32.keybd_event(0, val, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, 0)
 
@@ -218,9 +248,8 @@ def press_special_key(key_type):
 async def ws_process_request(connection, request):
     upgrade = request.headers.get("Upgrade", "").lower()
     connection_hdr = request.headers.get("Connection", "").lower()
-    # If not a valid WebSocket handshake request, return friendly HTTP 200 response
     if upgrade != "websocket" or "upgrade" not in connection_hdr:
-        msg = f"Virtual Mouse WebSocket Server is active on port {PORT_WS}.\nPlease open http://{get_local_ip()}:{PORT_HTTP} in your browser to access the app.\n".encode("utf-8")
+        msg = f"Virtual Mouse WebSocket Server is active on port {PORT_WS}.\nPlease open http://{get_local_ip()}:{PORT_HTTP} in your browser.\n".encode("utf-8")
         return connection.respond(
             http.HTTPStatus.OK,
             [
@@ -256,11 +285,10 @@ async def ws_handler(websocket):
                         await websocket.send(json.dumps({
                             "type": "auth_result",
                             "status": "error",
-                            "message": "Incorrect Connect PIN. Please check server console."
+                            "message": "Incorrect Connect PIN. Please check Desktop Dashboard."
                         }))
                     continue
                 
-                # Auto-authenticate if not set
                 if not authenticated:
                     if str(data.get("code", "")).strip() == SERVER_PIN:
                         authenticated = True
@@ -332,13 +360,7 @@ async def main():
         print(f"  [+] WebSocket Port:      {PORT_WS}")
         print(f"  [*] CONNECT CODE (PIN):  {SERVER_PIN}")
         print("-" * 64)
-        print("  HOW TO CONNECT FROM YOUR MOBILE PHONE:")
-        print(f"  1. Connect phone to same WiFi ({local_ip})")
-        print(f"  2. Open browser: http://{local_ip}:{PORT_HTTP}")
-        print(f"     Or Netlify URL: https://<your-app>.netlify.app")
-        print(f"  3. Enter IP: {local_ip}  |  Port: {PORT_WS}  |  PIN: {SERVER_PIN}")
-        print(f"  4. Quick Link:")
-        print(f"     http://{local_ip}:{PORT_HTTP}/?ip={local_ip}&port={PORT_WS}&code={SERVER_PIN}")
+        print(f"  [WEB APP LINK]           http://{local_ip}:{PORT_HTTP}")
         print("=" * 64)
         
         await asyncio.Event().wait()

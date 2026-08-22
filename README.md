@@ -1,85 +1,75 @@
 # 📱 Virtual Mouse & Live Desktop Keyboard
 
-Transform your smartphone or tablet into a wireless trackpad, live keyboard, and desktop controller for your PC.
+Transform your smartphone or tablet into a wireless trackpad, live keyboard, and desktop controller for your PC with a **Unified Single Web Application** served at `http://<PC-IP>:5000`.
 
 ![Platform](https://img.shields.io/badge/Platform-Windows%20PC-blue)
 ![PWA Ready](https://img.shields.io/badge/PWA-Installable-cyan)
-![Deploy](https://img.shields.io/badge/Deploy-Netlify-00ad9f)
 
 ---
 
-## ✨ Features
+## ✨ Unified Features
 
-- 📱 **Progressive Web App (PWA)**: Installable directly onto iOS & Android home screens for a full-screen, native app feel with offline caching.
-- ⌨️ **Live Keyboard & Desktop TextPad**:
-  - **Live Auto-Typing**: Click the single text box and type on your phone; keystrokes are transmitted in real-time to your desktop's active window/notepad.
+- 🖥️ **Desktop Control Panel Mode**:
+  - Auto-detects local network IP (`e.g., 10.36.44.86`).
+  - Displays & generates 4-digit Connect PINs and Port selection (`5001`).
+  - Start / Stop Server toggle button.
+  - Live QR code generator for instant mobile pairing.
+  - 5-step setup workflow.
+
+- 📱 **Mobile Remote Controller Mode**:
+  - **Auto QR Pairing**: Scanning the Desktop QR code opens the app on your phone with IP, Port, and Connect PIN auto-filled!
+  - **Progressive Web App (PWA)**: Installable directly onto iOS & Android home screens.
+  - **Live Auto-Typing**: Type on your phone; keystrokes are transmitted in real-time to your desktop's active window/notepad.
   - **Desktop TextPad**: Draft or paste full multi-line paragraphs/notes and send the entire block to your PC with one tap.
   - **Quick Keycodes & Modifiers**: Dedicated buttons for `Enter ↵`, `Backspace ⌫`, `Space ␣`, `Tab ⇥`, `Esc`, navigation arrow keys (`▲`, `▼`, `◄`, `►`), and PC shortcuts (`Ctrl+A`, `Ctrl+C`, `Ctrl+V`, `Ctrl+Z`).
-- 🖱️ **Ultra-Smooth Trackpad**:
-  - 1:1 cursor movement with Windows DPI scaling awareness.
-  - Multi-touch gestures (Tap to click, Drag to move, Two-finger vertical scrolling).
-  - Left & Right click buttons with haptic visual feedback.
-  - Hardware-like scroll wheel slider with spring physics.
-- 🔑 **Dual Connection Modes & PIN Security**:
-  - **Option 1 (IP + Port + Connect PIN)**: 4-digit pairing PIN authentication for secure pairing over WiFi.
-  - **Option 2 (Direct Mouse & Keycode UI)**: Instant one-click access to all controller tools.
-- 🚀 **Netlify Ready**: Pre-configured `netlify.toml` for 1-click cloud deployment.
+  - **Ultra-Smooth Trackpad**: 1:1 cursor movement, multi-touch gestures (Tap click, Drag move, Two-finger scroll).
+  - **Mode Toggle Button**: Header button allowing you to switch between Desktop Dashboard and Mobile Remote Controller view anytime!
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (One Command)
 
-### 1. Requirements
-- Python 3.8+ on Windows PC
-- `websockets` library
-
-Install dependencies:
+### 1. Install Requirements (First Time Only)
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Start Desktop Server
+### 2. Start the Server
 ```bash
 python server.py
 ```
 
-Console will display your Local IP, WebSocket port, and **Connect PIN**:
+Console output:
 ```text
 ================================================================
-        🎮 VIRTUAL MOUSE & KEYBOARD SERVER ACTIVE
+        [+] VIRTUAL MOUSE & KEYBOARD SERVER ACTIVE
 ================================================================
-  [+] Local IP Address:    192.168.1.15
+  [+] Local IP Address:    10.36.44.86
   [+] HTTP Web Port:       5000
   [+] WebSocket Port:      5001
-  [🔑] CONNECT CODE (PIN): 5829
+  [*] CONNECT CODE (PIN):  7235
+----------------------------------------------------------------
+  [WEB APP LINK]           http://10.36.44.86:5000
 ================================================================
 ```
 
-### 3. Connect from Mobile Phone
-1. Connect your phone to the same WiFi network as your PC.
-2. Open `http://<PC-IP>:5000` (or your Netlify URL) in your mobile browser.
-3. Enter your PC's IP and 4-digit Connect PIN and tap **Start & Connect** (or tap **Open Mouse & Keycode UI**).
-
----
-
-## 🌐 Netlify Deployment
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for full instructions on deploying this PWA frontend to Netlify.
+### 3. Open on PC & Scan from Mobile
+1. Open **`http://localhost:5000`** in your PC browser to see your IP, WebSocket Port (5001), 4-digit PIN, and pairing QR code.
+2. Scan the QR code using your phone camera (or open `http://<PC-IP>:5000` on your phone).
+3. Tap **Start & Connect** to start controlling your PC mouse & live keyboard!
 
 ---
 
 ## 📂 Project Structure
 
 ```text
-├── server.py             # Python server with ctypes simulation & WebSocket PIN auth
+├── server.py             # Single Python server with ctypes simulation & static HTTP routing
 ├── requirements.txt      # Python dependencies (websockets)
-├── netlify.toml          # Netlify build configuration & PWA headers
-├── DEPLOYMENT.md         # Deployment & connection guide
-└── static/               # Client frontend (PWA)
-    ├── index.html        # Multi-screen web app UI (Connect, Mouse, Keyboard, Settings)
-    ├── style.css         # Dark neon cyber aesthetic styles
-    ├── app.js            # WebSocket client, PWA install, live typing & keycodes
-    ├── sw.js             # Service worker offline caching
-    ├── manifest.json     # PWA Web App Manifest
-    └── icons/            # App icons (SVG, 192x192, 512x512)
+├── static/               # Unified Single Page Application (PWA)
+│   ├── index.html        # Unified HTML containing Desktop & Mobile views
+│   ├── style.css         # Modern dark cyber aesthetic & responsive styles
+│   ├── app.js            # Automatic mode detection, WebSocket pairing & touchpad gestures
+│   ├── sw.js             # Service worker offline caching
+│   ├── manifest.json     # PWA Web App Manifest
+│   └── icons/            # App icons
 ```
