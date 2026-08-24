@@ -386,24 +386,34 @@
                         <span class="keypad-helper-badge">Touch Enabled</span>
                     </div>
 
-                    <!-- Row 1: Common Control Keys -->
-                    <div class="keypad-section-label">Primary Actions</div>
-                    <div class="keycode-grid grid-5">
+                    <!-- Row 1: Primary Actions & Modifiers (4 keys per row) -->
+                    <div class="keypad-section-label">Primary Actions & Modifiers</div>
+                    <div class="keycode-grid grid-4">
                         <button class="keycode-btn action-key esc-btn" data-key="esc">Esc</button>
                         <button class="keycode-btn action-key tab-btn-key" data-key="tab">Tab ⇥</button>
+                        <button class="keycode-btn action-key shift-btn" data-key="shift">Shift ⇧</button>
+                        <button class="keycode-btn action-key alt-btn" data-key="alt">Alt ⎇</button>
+                        <button class="keycode-btn action-key win-btn" data-key="win">Win ⊞</button>
+                        <button class="keycode-btn action-key fn-btn" data-key="fn">Fn ⚡</button>
                         <button class="keycode-btn action-key space-btn" data-key="space">Space ␣</button>
                         <button class="keycode-btn action-key backspace-btn" data-key="backspace">⌫ Back</button>
-                        <button class="keycode-btn action-key enter-btn" data-key="enter">↵ Enter</button>
+                        <button class="keycode-btn action-key enter-btn enter-btn-full" data-key="enter">↵ Enter Key</button>
                     </div>
 
-                    <!-- Row 2: PC Shortcuts -->
-                    <div class="keypad-section-label">PC Shortcuts</div>
+                    <!-- Row 2: PC & Alt Shortcuts (4 keys per row) -->
+                    <div class="keypad-section-label">PC & Alt Shortcuts</div>
                     <div class="keycode-grid grid-4">
                         <button class="keycode-btn shortcut-key" data-key="ctrl+a">Ctrl+A</button>
                         <button class="keycode-btn shortcut-key" data-key="ctrl+c">Ctrl+C</button>
                         <button class="keycode-btn shortcut-key" data-key="ctrl+v">Ctrl+V</button>
                         <button class="keycode-btn shortcut-key" data-key="ctrl+z">Ctrl+Z</button>
+                        <button class="keycode-btn shortcut-key alt-shortcut" data-key="alt+tab">Alt+Tab ⇥</button>
+                        <button class="keycode-btn shortcut-key alt-shortcut" data-key="alt+f4">Alt+F4 ✖</button>
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+s">Ctrl+S 💾</button>
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+y">Ctrl+Y ↷</button>
                     </div>
+
+
 
                     <!-- Row 3: Navigation & Arrow D-Pad -->
                     <div class="keypad-section-label">Navigation & Arrow Keys</div>
@@ -437,16 +447,7 @@
             <div class="scroll-content">
                 <p class="settings-group-label">General Preferences</p>
                 <div class="settings-card">
-                    <div class="setting-row">
-                        <div class="setting-label-icon">
-                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                            <span>Dark Mode</span>
-                        </div>
-                        <label class="switch-toggle">
-                            <input type="checkbox" id="toggle-dark-mode" checked>
-                            <span class="slider-round"></span>
-                        </label>
-                    </div>
+
                     
                     <div class="setting-row-column">
                         <div class="setting-slider-header">
@@ -506,6 +507,167 @@
                 <button class="disconnect-btn-action" id="btn-action-disconnect">
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
                     Disconnect Device
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= 6. How to Connect Screen ================= -->
+        <section id="screen-how-to-connect" class="screen">
+            <header class="app-header active-header">
+                <button class="icon-btn" id="btn-back-how-to-connect" title="Back to Settings">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+                <h2>How to Connect</h2>
+                <div style="width:22px;"></div>
+            </header>
+
+            <div class="scroll-content guide-scroll-area">
+                <div class="guide-intro-card">
+                    <div class="guide-badge">WiFi / Hotspot Network Pairing</div>
+                    <p class="guide-subtitle">Follow these 4 simple steps to connect your mobile phone to your Windows PC.</p>
+                </div>
+
+                <div class="guide-steps-list">
+                    <!-- Step 1 -->
+                    <div class="guide-step-card">
+                        <div class="step-number-badge">1</div>
+                        <div class="step-content">
+                            <h4>Run Server on Windows PC</h4>
+                            <p>Open Terminal / PowerShell on your PC and launch the server:</p>
+                            <div class="code-snippet-box">
+                                <code>npx virtual-mouse-app</code>
+                            </div>
+                            <p class="step-subtext">The console will activate and show your <strong>PC's IP Address</strong> and 4-digit <strong>Connect PIN</strong>.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="guide-step-card">
+                        <div class="step-number-badge">2</div>
+                        <div class="step-content">
+                            <h4>Connect to Same Wi-Fi</h4>
+                            <p>Ensure both your mobile phone and PC are connected to the <strong>same Wi-Fi network</strong> (or phone Mobile Hotspot).</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="guide-step-card">
+                        <div class="step-number-badge">3</div>
+                        <div class="step-content">
+                            <h4>Scan QR Code or Enter IP</h4>
+                            <div class="option-subblock">
+                                <div class="option-pill">Option A (Easiest)</div>
+                                <p>Open your phone camera and scan the <strong>terminal QR code</strong>. It will open the web app with IP & PIN pre-filled!</p>
+                            </div>
+                            <div class="option-subblock" style="margin-top:10px;">
+                                <div class="option-pill">Option B (Manual)</div>
+                                <p>On the <strong>Connect</strong> screen, type your PC's IP address (e.g. <code>10.15.235.86</code>) and the 4-digit <strong>Connect PIN</strong>.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="guide-step-card">
+                        <div class="step-number-badge">4</div>
+                        <div class="step-content">
+                            <h4>Start Controlling Desktop</h4>
+                            <p>Tap <strong>"Start & Connect"</strong>. Once connected, use the trackpad gestures:</p>
+                            <ul class="gesture-bullets">
+                                <li><strong>1-Finger Drag:</strong> Smooth cursor movement</li>
+                                <li><strong>1-Finger Tap:</strong> Left Click</li>
+                                <li><strong>2-Finger Drag:</strong> Vertical Scrolling</li>
+                                <li><strong>Press & Hold Scroll Arrow:</strong> Continuous Auto-Scroll</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="primary-btn" id="btn-guide-go-connect" style="margin-top:20px;">
+                    <span>Go to Connection Screen</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= 7. Troubleshooting Screen ================= -->
+        <section id="screen-troubleshooting" class="screen">
+            <header class="app-header active-header">
+                <button class="icon-btn" id="btn-back-troubleshooting" title="Back to Settings">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+                <h2>Troubleshooting</h2>
+                <div style="width:22px;"></div>
+            </header>
+
+            <div class="scroll-content guide-scroll-area">
+                <div class="guide-intro-card faq-banner">
+                    <div class="guide-badge faq-badge">Diagnostics & Fixes</div>
+                    <p class="guide-subtitle">Having trouble connecting or controlling your PC? Find quick solutions below.</p>
+                </div>
+
+                <div class="faq-list">
+                    <!-- Issue 1 -->
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="faq-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="17"></line></svg>
+                            <span>Phone says "Connection Timed Out" or "Could not connect"</span>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Common Causes:</strong> Windows Firewall blocking Node.js, or phone and PC are on different Wi-Fi networks.</p>
+                            <p style="margin-top:6px;"><strong>Solutions:</strong></p>
+                            <ol>
+                                <li>Check Windows Defender Firewall -> Allow an app -> Enable <strong>Private & Public</strong> access for <code>Node.js</code>.</li>
+                                <li>Verify phone and PC are on the <strong>same Wi-Fi router network</strong>.</li>
+                                <li>If using a public/work Wi-Fi, turn on phone's Mobile Hotspot and connect PC to phone hotspot.</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Issue 2 -->
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="faq-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            <span>"Port 5000 is already in use by another process"</span>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Cause:</strong> Another background server or app is using HTTP port 5000.</p>
+                            <p style="margin-top:6px;"><strong>Solution:</strong> Start the server on a different open port using the <code>--port</code> argument:</p>
+                            <div class="code-snippet-box">
+                                <code>node server.js --port=8080</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Issue 3 -->
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="faq-icon"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            <span>Terminal QR Code won't scan on phone camera</span>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Solutions:</strong></p>
+                            <ol>
+                                <li>Open terminal link directly: click the <strong>Instant Mobile Link</strong> printed in the terminal console.</li>
+                                <li>View high-res QR image link printed in console: <code>https://api.qrserver.com/...</code></li>
+                                <li>Or manually type the PC IP (e.g. <code>10.15.235.86</code>) into the app Connect screen.</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Issue 4 -->
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="faq-icon"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                            <span>App disconnected after closing browser tab</span>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Fixed in v2.5:</strong> App auto-restores connection when returning to the tab. If you accidentally clicked "Disconnect Device", enter your 4-digit PIN on the home screen and click "Start & Connect".</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="outline-btn" id="btn-troubleshoot-reconnect" style="margin-top:20px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    <span>Try Reconnecting Now</span>
                 </button>
             </div>
         </section>

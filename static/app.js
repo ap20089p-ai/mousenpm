@@ -84,7 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const keycodeBtns = document.querySelectorAll(".keycode-btn");
 
     // Settings UI
-    const toggleDarkMode = document.getElementById("toggle-dark-mode");
     const sliderDpi = document.getElementById("slider-dpi");
     const lblDpiValue = document.getElementById("lbl-dpi-value");
     const btnReconnect = document.getElementById("btn-menu-reconnect");
@@ -157,12 +156,19 @@ document.addEventListener("DOMContentLoaded", () => {
     inputPort.value = paramPort || savedPort || "5001";
     inputPin.value = paramPin || savedPin || "";
 
-    // Auto-connect if URL params provided
-    if (paramIp && paramPin) {
+    // Auto-connect on load if URL params or saved pairing credentials are present
+    const targetAutoIp = paramIp || savedHost;
+    const targetAutoPin = paramPin || savedPin;
+    const targetAutoPort = paramPort || savedPort || "5000";
+
+    if (targetAutoIp && targetAutoPin) {
         setTimeout(() => {
-            connectToServer(paramIp, paramPort || "5001", paramPin);
-        }, 1000);
+            if (!isConnected && !isUserDisconnect) {
+                connectToServer(targetAutoIp, targetAutoPort, targetAutoPin);
+            }
+        }, 800);
     }
+
 
     // ================= Navigation & View Management =================
 
@@ -191,7 +197,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         navItems.forEach(item => {
-            if (item.getAttribute("data-screen") === targetScreenId) {
+            const itemScreen = item.getAttribute("data-screen");
+            if (itemScreen === targetScreenId ||
+               ((targetScreenId === "screen-how-to-connect" || targetScreenId === "screen-troubleshooting") && itemScreen === "screen-settings")) {
                 item.classList.add("active");
             } else {
                 item.classList.remove("active");
@@ -267,14 +275,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- Keep-Alive Ping & Auto-Reconnect Helpers ---
+    // --- Keep-Alive Ping & Auto-Disconnect Helpers ---
+    let lastPongReceivedTime = Date.now();
+
     function startHeartbeat() {
         stopHeartbeat();
+        lastPongReceivedTime = Date.now();
         heartbeatTimer = setInterval(() => {
             if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ type: "ping" }));
+                // If no pong or traffic received in 15s, auto-disconnect cleanly
+                if (Date.now() - lastPongReceivedTime > 15000) {
+                    console.warn("Heartbeat timeout: Auto-disconnecting stale connection");
+                    stopHeartbeat();
+                    try { socket.close(); } catch (e) {}
+                    updateConnectionUI("disconnected", "Auto-Disconnected (Lost Connection)");
+                    showToast("Disconnected: PC server lost / timed out.");
+                    return;
+                }
+                socket.send(JSON.stringify({ type: "ping", timestamp: Date.now() }));
             }
-        }, 10000); // Send keep-alive ping every 10s
+        }, 5000); // Send ping every 5 seconds
     }
 
     function stopHeartbeat() {
@@ -316,20 +336,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const connectTimeout = setTimeout(() => {
             if (!isConnected) {
                 if (socket) socket.close();
-                startSimulatorFallback("Connection timed out. Switched to Interactive Mode.");
+                updateConnectionUI("disconnected", "Connection Timed Out");
+                showToast("Could not connect to PC server.");
             }
-        }, 3500);
+        }, 4000);
 
         try {
             const wsPort = port || "5001";
-            // Check protocol: if hosted on HTTPS, try wss or ws with fallback
             const isHttps = window.location.protocol === "https:";
             const wsProtocol = isHttps ? "wss" : "ws";
             
             socket = new WebSocket(`${wsProtocol}://${ip}:${wsPort}`);
             
             socket.onopen = () => {
-                // Send PIN authentication handshake
                 const codeToSend = pin || inputPin.value.trim() || "DEMO";
                 socket.send(JSON.stringify({
                     type: "auth",
@@ -338,8 +357,13 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             socket.onmessage = (event) => {
+                lastPongReceivedTime = Date.now();
                 try {
                     const data = JSON.parse(event.data);
+                    if (data.type === "pong") {
+                        // Heartbeat ack acknowledged
+                        return;
+                    }
                     if (data.type === "auth_result") {
                         if (data.status === "success") {
                             clearTimeout(connectTimeout);
@@ -369,6 +393,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 } catch (err) {}
             };
+
 
             socket.onerror = () => {
                 // Error handled by timeout
@@ -539,21 +564,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     btnDisconnect.addEventListener("click", disconnectDevice);
 
-    // --- Automatic Disconnect on Tab Close ---
-    function handleTabClose() {
-        isUserDisconnect = true;
-        if (autoReconnectTimer) clearTimeout(autoReconnectTimer);
-        stopHeartbeat();
-        if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
-            try {
-                socket.close(1000, "Tab closed");
-            } catch (e) {}
-            socket = null;
+    // --- Persistent Connection: Auto-Reconnect when returning to App / Tab ---
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            if (!isConnected && !isUserDisconnect) {
+                const ip = window.localStorage.getItem("virtualMouse.lastConnectedIp") || inputIp.value.trim();
+                const port = window.localStorage.getItem("virtualMouse.lastConnectedPort") || inputPort.value.trim() || "5000";
+                const pin = window.localStorage.getItem("virtualMouse.lastConnectedPin") || inputPin.value.trim();
+                if (ip && pin) {
+                    showToast("Restoring connection to PC...");
+                    connectToServer(ip, port, pin);
+                }
+            }
         }
-    }
+    });
 
-    window.addEventListener("beforeunload", handleTabClose);
-    window.addEventListener("pagehide", handleTabClose);
+    window.addEventListener("online", () => {
+        if (!isConnected && !isUserDisconnect) {
+            const ip = window.localStorage.getItem("virtualMouse.lastConnectedIp") || inputIp.value.trim();
+            const port = window.localStorage.getItem("virtualMouse.lastConnectedPort") || inputPort.value.trim() || "5000";
+            const pin = window.localStorage.getItem("virtualMouse.lastConnectedPin") || inputPin.value.trim();
+            if (ip && pin) {
+                connectToServer(ip, port, pin);
+            }
+        }
+    });
+
 
     // ================= Trackpad Gestures Handler =================
 
@@ -672,18 +708,14 @@ document.addEventListener("DOMContentLoaded", () => {
     bindClickButton(btnLeftClick, "left");
     bindClickButton(btnRightClick, "right");
 
-    // Scroll Arrows
-    btnScrollUp.addEventListener("click", () => {
-        sendMessage({ type: "scroll", dy: 4 });
-        animateNotch(4);
-    });
-
-    btnScrollDown.addEventListener("click", () => {
-        sendMessage({ type: "scroll", dy: -4 });
-        animateNotch(-4);
-    });
+    // ================= Auto-Scroll & Scroll Wheel Controller =================
+    let autoScrollInterval = null;
+    let holdScrollTimeout = null;
+    let isHandsFreeAutoScrolling = false;
+    let handsFreeDirection = 0; // 1 for Up, -1 for Down
 
     function animateNotch(amt) {
+        if (!scrollNotch) return;
         const offset = amt > 0 ? -12 : 12;
         scrollNotch.style.transform = `translateY(calc(-50% + ${offset}px))`;
         setTimeout(() => {
@@ -691,26 +723,222 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 120);
     }
 
+    function startHoldingScroll(direction) {
+        stopAutoScroll();
+
+        // Immediate first step
+        const dy = direction * 4;
+        sendMessage({ type: "scroll", dy: dy });
+        animateNotch(dy);
+
+        const btn = direction > 0 ? btnScrollUp : btnScrollDown;
+        if (btn) btn.classList.add("auto-scrolling");
+
+        // Start continuous scrolling loop after initial hold threshold
+        holdScrollTimeout = setTimeout(() => {
+            autoScrollInterval = setInterval(() => {
+                sendMessage({ type: "scroll", dy: dy });
+                animateNotch(dy);
+            }, 60);
+        }, 220);
+    }
+
+    function stopHoldingScroll() {
+        if (holdScrollTimeout) {
+            clearTimeout(holdScrollTimeout);
+            holdScrollTimeout = null;
+        }
+        if (!isHandsFreeAutoScrolling && autoScrollInterval) {
+            clearInterval(autoScrollInterval);
+            autoScrollInterval = null;
+        }
+        if (btnScrollUp) btnScrollUp.classList.remove("auto-scrolling");
+        if (btnScrollDown) btnScrollDown.classList.remove("auto-scrolling");
+    }
+
+    function toggleHandsFreeAutoScroll(direction) {
+        if (isHandsFreeAutoScrolling && handsFreeDirection === direction) {
+            stopAutoScroll();
+            showToast("Auto-Scroll Stopped");
+            return;
+        }
+
+        stopAutoScroll();
+        isHandsFreeAutoScrolling = true;
+        handsFreeDirection = direction;
+
+        const dy = direction * 3;
+        const modeText = direction > 0 ? "AUTO ▲" : "AUTO ▼";
+        const lblScroll = document.querySelector(".scroll-label");
+        if (lblScroll) lblScroll.textContent = modeText;
+
+        const activeBtn = direction > 0 ? btnScrollUp : btnScrollDown;
+        if (activeBtn) activeBtn.classList.add("hands-free-active");
+
+        showToast(`Hands-Free Auto-Scroll ${direction > 0 ? "Up" : "Down"} Active`);
+
+        autoScrollInterval = setInterval(() => {
+            sendMessage({ type: "scroll", dy: dy });
+            animateNotch(dy);
+        }, 70);
+    }
+
+    function stopAutoScroll() {
+        if (holdScrollTimeout) {
+            clearTimeout(holdScrollTimeout);
+            holdScrollTimeout = null;
+        }
+        if (autoScrollInterval) {
+            clearInterval(autoScrollInterval);
+            autoScrollInterval = null;
+        }
+        isHandsFreeAutoScrolling = false;
+        handsFreeDirection = 0;
+
+        const lblScroll = document.querySelector(".scroll-label");
+        if (lblScroll) lblScroll.textContent = "Scroll";
+
+        if (btnScrollUp) {
+            btnScrollUp.classList.remove("auto-scrolling", "hands-free-active");
+        }
+        if (btnScrollDown) {
+            btnScrollDown.classList.remove("auto-scrolling", "hands-free-active");
+        }
+    }
+
+    function setupScrollArrow(btnEl, direction) {
+        if (!btnEl) return;
+        let lastTapTime = 0;
+
+        // Pointer press-and-hold + double tap toggle
+        btnEl.addEventListener("pointerdown", (e) => {
+            e.preventDefault();
+            const now = Date.now();
+            if (now - lastTapTime < 300) {
+                toggleHandsFreeAutoScroll(direction);
+                lastTapTime = 0;
+                return;
+            }
+            lastTapTime = now;
+
+            if (isHandsFreeAutoScrolling) {
+                stopAutoScroll();
+                return;
+            }
+
+            startHoldingScroll(direction);
+        });
+
+        btnEl.addEventListener("pointerup", (e) => {
+            e.preventDefault();
+            stopHoldingScroll();
+        });
+
+        btnEl.addEventListener("pointercancel", stopHoldingScroll);
+        btnEl.addEventListener("mouseleave", stopHoldingScroll);
+
+        // Standard click fallback
+        btnEl.addEventListener("click", (e) => {
+            if (!holdScrollTimeout && !autoScrollInterval) {
+                const dy = direction * 4;
+                sendMessage({ type: "scroll", dy: dy });
+                animateNotch(dy);
+            }
+        });
+    }
+
+    setupScrollArrow(btnScrollUp, 1);
+    setupScrollArrow(btnScrollDown, -1);
+
+    // Tap on central scroll slider toggles auto-scroll
+    const scrollSlider = document.querySelector(".scroll-indicator-slider");
+    if (scrollSlider) {
+        scrollSlider.addEventListener("click", () => {
+            if (isHandsFreeAutoScrolling) {
+                stopAutoScroll();
+                showToast("Auto-Scroll Stopped");
+            } else {
+                toggleHandsFreeAutoScroll(-1); // Default auto scroll down
+            }
+        });
+    }
+
+    // Stop hands-free auto scroll if user touches trackpad
+    trackpadArea.addEventListener("touchstart", () => {
+        if (isHandsFreeAutoScrolling) {
+            stopAutoScroll();
+        }
+    }, { passive: true });
+
+
+    // Prevent Backspace key from ever navigating back or closing browser tab
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" || e.keyCode === 8) {
+            const active = document.activeElement;
+            const isInputField = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+            if (!isInputField) {
+                e.preventDefault();
+            }
+        }
+    });
+
     // ================= Dedicated Keyboard & TextPad Tools =================
 
-    // Tool 1: Live Keystroke Auto-Typing
+    function triggerLivePulse() {
+        if (pillLiveTransmitting) {
+            pillLiveTransmitting.textContent = "Sent ⚡";
+            setTimeout(() => {
+                pillLiveTransmitting.textContent = "Live Stream ⚡";
+            }, 300);
+        }
+    }
+
+    // Tool 1: Live Keystroke Auto-Typing (Supports Mobile Soft Keyboards & Backspace)
+    kbLiveInput.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" || e.keyCode === 8) {
+            e.preventDefault();
+            sendMessage({
+                type: "keycode",
+                key: "backspace"
+            });
+            kbLiveInput.value = "";
+            triggerLivePulse();
+        } else if (e.key === "Enter" || e.keyCode === 13) {
+            e.preventDefault();
+            sendMessage({
+                type: "keycode",
+                key: "enter"
+            });
+            kbLiveInput.value = "";
+            triggerLivePulse();
+        }
+    });
+
+    kbLiveInput.addEventListener("beforeinput", (e) => {
+        if (e.inputType === "deleteContentBackward" || e.inputType === "deleteContentForward") {
+            e.preventDefault();
+            sendMessage({
+                type: "keycode",
+                key: "backspace"
+            });
+            kbLiveInput.value = "";
+            triggerLivePulse();
+        }
+    });
+
     kbLiveInput.addEventListener("input", (e) => {
+        if (e.inputType === "deleteContentBackward" || e.inputType === "deleteContentForward") {
+            kbLiveInput.value = "";
+            return;
+        }
         const typedVal = e.target.value;
         if (typedVal.length > 0) {
             sendMessage({
                 type: "text",
                 text: typedVal
             });
-            // Clear input immediately to receive next keystroke continuously
             kbLiveInput.value = "";
-            
-            // Visual pulse on live indicator
-            if (pillLiveTransmitting) {
-                pillLiveTransmitting.textContent = "Sent ⚡";
-                setTimeout(() => {
-                    pillLiveTransmitting.textContent = "Live Stream";
-                }, 300);
-            }
+            triggerLivePulse();
         }
     });
 
@@ -734,6 +962,7 @@ document.addEventListener("DOMContentLoaded", () => {
             kbLiveInput.focus();
         });
     }
+
 
     // Tool 2: Desktop TextPad (Multi-line block sender)
     btnSendTextpad.addEventListener("click", () => {
@@ -785,15 +1014,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ================= Settings Screen Logic =================
 
-    toggleDarkMode.addEventListener("change", () => {
-        if (toggleDarkMode.checked) {
-            document.body.classList.add("dark-theme");
-            document.body.classList.remove("light-theme");
-        } else {
-            document.body.classList.add("light-theme");
-            document.body.classList.remove("dark-theme");
-        }
-    });
+
 
     sliderDpi.addEventListener("input", () => {
         const val = parseInt(sliderDpi.value);
@@ -833,13 +1054,56 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    document.getElementById("btn-support-use").addEventListener("click", () => {
-        showToast("How to Use: Connect PC & phone to same WiFi, enter IP & PIN, and enjoy!");
-    });
+    // Dedicated Screen Navigation for How to Connect & Troubleshooting
+    const btnSupportUse = document.getElementById("btn-support-use");
+    if (btnSupportUse) {
+        btnSupportUse.addEventListener("click", () => {
+            navigateTo("screen-how-to-connect");
+        });
+    }
     
-    document.getElementById("btn-support-faq").addEventListener("click", () => {
-        showToast("Tip: If connection fails, check Windows Firewall or use Option 2.");
-    });
+    const btnSupportFaq = document.getElementById("btn-support-faq");
+    if (btnSupportFaq) {
+        btnSupportFaq.addEventListener("click", () => {
+            navigateTo("screen-troubleshooting");
+        });
+    }
+
+    const btnBackHowToConnect = document.getElementById("btn-back-how-to-connect");
+    if (btnBackHowToConnect) {
+        btnBackHowToConnect.addEventListener("click", () => {
+            navigateTo("screen-settings");
+        });
+    }
+
+    const btnBackTroubleshooting = document.getElementById("btn-back-troubleshooting");
+    if (btnBackTroubleshooting) {
+        btnBackTroubleshooting.addEventListener("click", () => {
+            navigateTo("screen-settings");
+        });
+    }
+
+    const btnGuideGoConnect = document.getElementById("btn-guide-go-connect");
+    if (btnGuideGoConnect) {
+        btnGuideGoConnect.addEventListener("click", () => {
+            navigateTo("screen-home");
+        });
+    }
+
+    const btnTroubleshootReconnect = document.getElementById("btn-troubleshoot-reconnect");
+    if (btnTroubleshootReconnect) {
+        btnTroubleshootReconnect.addEventListener("click", () => {
+            const ip = window.localStorage.getItem("virtualMouse.lastConnectedIp") || inputIp.value.trim();
+            const port = window.localStorage.getItem("virtualMouse.lastConnectedPort") || inputPort.value.trim();
+            const pin = window.localStorage.getItem("virtualMouse.lastConnectedPin") || inputPin.value.trim();
+            if (ip && pin) {
+                connectToServer(ip, port, pin);
+            } else {
+                navigateTo("screen-home");
+            }
+        });
+    }
+
 
     // ================= Utility Toast Notification =================
 
