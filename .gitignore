@@ -18,3 +18,7 @@ Thumbs.db
 *.suo
 *.swp
 *.log
+
+# Node.js
+node_modules/
+npm-debug.log*

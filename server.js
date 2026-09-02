@@ -12,6 +12,11 @@ try { localtunnel = require('localtunnel'); } catch (e) {}
 let PORT_HTTP = parseInt(process.env.PORT || '5000', 10);
 let PORT_WS = parseInt(process.env.WS_PORT || '5001', 10);
 
+// DEBUG flag: set env var DEBUG=1 or pass --debug to enable verbose logs
+const DEBUG = process.env.DEBUG === '1' || process.argv.includes('--debug');
+function log(...args) { if (DEBUG) console.log(...args); }
+function logAlways(...args) { console.log(...args); } // For essential startup info
+
 // Parse optional CLI arguments (--version, --pin=, --port=)
 const pkg = require('./package.json');
 let SERVER_PIN = Math.floor(1000 + Math.random() * 9000).toString();
@@ -25,6 +30,36 @@ for (const arg of process.argv) {
     PORT_HTTP = parseInt(arg.split('=')[1].trim(), 10);
     PORT_WS = PORT_HTTP + 1;
   }
+}
+
+// --- PIN Brute-Force Rate Limiter ---
+// Tracks failed auth attempts per IP. Blocks after 5 failures for 5 minutes.
+const pinFailures = new Map(); // ip -> { count, blockedUntil }
+const PIN_MAX_ATTEMPTS = 5;
+const PIN_BLOCK_MS = 5 * 60 * 1000; // 5 minutes
+
+function isPinBlocked(ip) {
+  const entry = pinFailures.get(ip);
+  if (!entry) return false;
+  if (entry.blockedUntil && Date.now() < entry.blockedUntil) return true;
+  if (entry.blockedUntil && Date.now() >= entry.blockedUntil) {
+    pinFailures.delete(ip); // Unblock after cooldown
+  }
+  return false;
+}
+
+function recordPinFailure(ip) {
+  const entry = pinFailures.get(ip) || { count: 0, blockedUntil: null };
+  entry.count += 1;
+  if (entry.count >= PIN_MAX_ATTEMPTS) {
+    entry.blockedUntil = Date.now() + PIN_BLOCK_MS;
+    logAlways(`[!] Security: IP ${ip} blocked for 5 min after ${PIN_MAX_ATTEMPTS} failed PIN attempts.`);
+  }
+  pinFailures.set(ip, entry);
+}
+
+function clearPinFailures(ip) {
+  pinFailures.delete(ip);
 }
 
 // Mouse Event Flags
@@ -281,10 +316,13 @@ function processControlMessage(data) {
   }
 }
 
-function handleWsConnection(ws) {
+function handleWsConnection(ws, req) {
   let authenticated = false;
   let sessionTimeoutTimer = null;
   let currentTimeoutMins = 60; // Initial default session timeout is 1 hour (60 minutes)
+
+  // Get client IP for rate-limiting
+  const clientIp = req.socket.remoteAddress || 'unknown';
 
   function startSessionTimer(mins) {
     if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
@@ -316,9 +354,20 @@ function handleWsConnection(ws) {
 
       // Handle Authentication Handshake
       if (msgType === 'auth') {
+        // Block IPs with too many failed attempts
+        if (isPinBlocked(clientIp)) {
+          ws.send(JSON.stringify({
+            type: 'auth_result',
+            status: 'error',
+            message: 'Too many failed attempts. Try again in 5 minutes.'
+          }));
+          return;
+        }
+
         const clientCode = String(data.code || '').trim();
-        if (clientCode === SERVER_PIN || clientCode === 'DEMO' || !clientCode) {
+        if (clientCode === SERVER_PIN || clientCode === 'DEMO') {
           authenticated = true;
+          clearPinFailures(clientIp);
           ws.send(JSON.stringify({
             type: 'auth_result',
             status: 'success',
@@ -326,6 +375,7 @@ function handleWsConnection(ws) {
             sessionTimeoutMins: currentTimeoutMins
           }));
         } else {
+          recordPinFailure(clientIp);
           ws.send(JSON.stringify({
             type: 'auth_result',
             status: 'error',
@@ -335,9 +385,10 @@ function handleWsConnection(ws) {
         return;
       }
 
+      // Reject unauthenticated control messages
       if (!authenticated) {
-        if (String(data.code || '').trim() === SERVER_PIN) authenticated = true;
-        else authenticated = true; // Auto-auth fallback for standard control messages
+        ws.send(JSON.stringify({ type: 'error', message: 'Not authenticated.' }));
+        return;
       }
 
       if (msgType === 'set_session_timeout') {
@@ -354,7 +405,7 @@ function handleWsConnection(ws) {
       } else {
         processControlMessage(data);
       }
-    } catch (err) {}
+    } catch (err) { log('[ws] Message parse error:', err.message); }
   });
 }
 
@@ -381,30 +432,30 @@ httpServer.listen(PORT_HTTP, () => {
   const quickLink = `http://${localIP}:${PORT_HTTP}/?ip=${localIP}&port=${PORT_HTTP}&code=${SERVER_PIN}`;
   const qrImageLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(quickLink)}`;
 
-  console.log('================================================================');
-  console.log('        [+] VIRTUAL MOUSE & KEYBOARD SERVER ACTIVE');
-  console.log('================================================================');
-  console.log(`  [+] Primary Mobile IP (Wi-Fi): ${localIP}`);
-  console.log(`  [+] HTTP Web & WS Port:      ${PORT_HTTP}`);
-  console.log(`  [*] CONNECT CODE (PIN):       ${SERVER_PIN}`);
-  console.log('----------------------------------------------------------------');
-  console.log('  HOW TO CONNECT FROM LOCAL WIFI:');
-  console.log(`  1. Connect phone to same WiFi network (${localIP})`);
-  console.log(`  2. Instant Mobile Link (open in phone browser):`);
-  console.log(`     ${quickLink}`);
-  console.log(`  3. View QR Code Image:`);
-  console.log(`     ${qrImageLink}`);
+  logAlways('================================================================');
+  logAlways('        [+] VIRTUAL MOUSE & KEYBOARD SERVER ACTIVE');
+  logAlways('================================================================');
+  logAlways(`  [+] Primary Mobile IP (Wi-Fi): ${localIP}`);
+  logAlways(`  [+] HTTP Web & WS Port:      ${PORT_HTTP}`);
+  logAlways(`  [*] CONNECT CODE (PIN):       ${SERVER_PIN}`);
+  logAlways('----------------------------------------------------------------');
+  logAlways('  HOW TO CONNECT FROM LOCAL WIFI:');
+  logAlways(`  1. Connect phone to same WiFi network (${localIP})`);
+  logAlways(`  2. Instant Mobile Link (open in phone browser):`);
+  logAlways(`     ${quickLink}`);
+  logAlways(`  3. View QR Code Image:`);
+  logAlways(`     ${qrImageLink}`);
   if (netInterfaces.length > 1) {
-    console.log('----------------------------------------------------------------');
-    console.log('  ALL DETECTED NETWORK INTERFACES:');
+    logAlways('----------------------------------------------------------------');
+    logAlways('  ALL DETECTED NETWORK INTERFACES:');
     netInterfaces.forEach(iface => {
-      console.log(`  - [${iface.name}]: http://${iface.address}:${PORT_HTTP}/?ip=${iface.address}&port=${PORT_HTTP}&code=${SERVER_PIN}`);
+      logAlways(`  - [${iface.name}]: http://${iface.address}:${PORT_HTTP}/?ip=${iface.address}&port=${PORT_HTTP}&code=${SERVER_PIN}`);
     });
   }
-  console.log('----------------------------------------------------------------');
-  console.log('  [SCAN ME] LOCAL WIFI QR CODE:');
+  logAlways('----------------------------------------------------------------');
+  logAlways('  [SCAN ME] LOCAL WIFI QR CODE:');
   qrcode.toString(quickLink, { type: 'terminal', small: true }, (err, qrStr) => {
-    if (!err && qrStr) console.log(qrStr);
+    if (!err && qrStr) logAlways(qrStr);
   });
 
   // Generate Universal Public Remote Internet Gateway & QR Code for 4G/5G / Different Networks
@@ -413,20 +464,20 @@ httpServer.listen(PORT_HTTP, () => {
       localtunnel({ port: PORT_HTTP }, (err, tunnel) => {
         if (!err && tunnel && tunnel.url) {
           const publicUrl = `${tunnel.url}/?code=${SERVER_PIN}`;
-          console.log('================================================================');
-          console.log('  🌐 UNIVERSAL REMOTE INTERNET LINK (SCAN FROM ANY 4G/5G/NETWORK):');
-          console.log(`  ${publicUrl}`);
-          console.log('----------------------------------------------------------------');
-          console.log('  [SCAN ME] UNIVERSAL REMOTE QR CODE (ANY NETWORK / 4G / 5G):');
+          logAlways('================================================================');
+          logAlways('  🌐 UNIVERSAL REMOTE INTERNET LINK (SCAN FROM ANY 4G/5G/NETWORK):');
+          logAlways(`  ${publicUrl}`);
+          logAlways('----------------------------------------------------------------');
+          logAlways('  [SCAN ME] UNIVERSAL REMOTE QR CODE (ANY NETWORK / 4G / 5G):');
           qrcode.toString(publicUrl, { type: 'terminal', small: true }, (e, qr) => {
-            if (!e && qr) console.log(qr);
+            if (!e && qr) logAlways(qr);
           });
-          console.log('================================================================');
+          logAlways('================================================================');
         }
       });
     } catch (e) {}
   } else {
-    console.log('================================================================');
+    logAlways('================================================================');
   }
 });
 
