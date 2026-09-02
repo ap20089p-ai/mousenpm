@@ -3,17 +3,23 @@ const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const os = require('os');
-const qrcode = require('qrcode-terminal');
+const qrcode = require('qrcode');
 const koffi = require('koffi');
+let localtunnel;
+try { localtunnel = require('localtunnel'); } catch (e) {}
 
 // --- Ports & Setup ---
 let PORT_HTTP = parseInt(process.env.PORT || '5000', 10);
 let PORT_WS = parseInt(process.env.WS_PORT || '5001', 10);
 
-// Parse optional CLI --pin= or --port= argument or generate random 4-digit PIN
+// Parse optional CLI arguments (--version, --pin=, --port=)
+const pkg = require('./package.json');
 let SERVER_PIN = Math.floor(1000 + Math.random() * 9000).toString();
 for (const arg of process.argv) {
-  if (arg.startsWith('--pin=')) {
+  if (arg === '--version' || arg === '-v') {
+    console.log(`v${pkg.version}`);
+    process.exit(0);
+  } else if (arg.startsWith('--pin=')) {
     SERVER_PIN = arg.split('=')[1].trim();
   } else if (arg.startsWith('--port=')) {
     PORT_HTTP = parseInt(arg.split('=')[1].trim(), 10);
@@ -32,16 +38,17 @@ const MOUSEEVENTF_MIDDLEUP = 0x0040;
 const MOUSEEVENTF_WHEEL = 0x0800;
 
 // Keyboard Event Flags
-const KEYEVENTF_UNICODE = 0x0004;
+const KEYEVENTF_EXTENDEDKEY = 0x0001;
 const KEYEVENTF_KEYUP = 0x0002;
+const KEYEVENTF_UNICODE = 0x0004;
 
-// Virtual Key Codes (Windows VK)
+// Virtual Key Codes (Windows VK) — must be defined before any function that uses them
 const VK_BACK = 0x08;
 const VK_TAB = 0x09;
 const VK_RETURN = 0x0D;
 const VK_SHIFT = 0x10;
 const VK_CONTROL = 0x11;
-const VK_MENU = 0x12;  // Alt Key
+const VK_MENU = 0x12;    // Alt Key
 const VK_ESCAPE = 0x1B;
 const VK_SPACE = 0x20;
 const VK_LEFT = 0x25;
@@ -49,13 +56,13 @@ const VK_UP = 0x26;
 const VK_RIGHT = 0x27;
 const VK_DOWN = 0x28;
 const VK_DELETE = 0x2E;
-const VK_LWIN = 0x5B;  // Windows Key
-const VK_F4 = 0x73;    // F4 Key
-const VK_F5 = 0x74;    // F5 Key (Refresh/Fn)
+const VK_LWIN = 0x5B;   // Windows Key
+const VK_F4 = 0x73;     // F4 Key
+const VK_F5 = 0x74;     // F5 Key (Refresh/Fn)
 
 // --- Windows user32.dll API Bindings via koffi ---
 let user32 = null;
-let GetCursorPos, SetCursorPos, mouse_event, keybd_event;
+let GetCursorPos, SetCursorPos, mouse_event, keybd_event, MapVirtualKey;
 
 try {
   user32 = koffi.load('user32.dll');
@@ -71,8 +78,49 @@ try {
   GetCursorPos = user32.func('bool GetCursorPos(_Out_ POINT *pt)');
   mouse_event = user32.func('void mouse_event(uint32_t dwFlags, uint32_t dx, uint32_t dy, uint32_t dwData, uintptr_t dwExtraInfo)');
   keybd_event = user32.func('void keybd_event(uint8_t bVk, uint8_t bScan, uint32_t dwFlags, uintptr_t dwExtraInfo)');
+  try {
+    MapVirtualKey = user32.func('uint32_t MapVirtualKeyA(uint32_t uCode, uint32_t uMapType)');
+  } catch (e) {}
 } catch (err) {
   console.warn('[!] Notice: Windows user32.dll bindings unavailable on this OS platform.');
+}
+
+function getScanCode(vk) {
+  if (MapVirtualKey) {
+    try { return MapVirtualKey(vk, 0); } catch (e) {}
+  }
+  return 0;
+}
+
+function isExtendedVK(vkCode) {
+  return [VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_DELETE, VK_LWIN].includes(vkCode);
+}
+
+function pressVK(vkCode) {
+  if (!keybd_event) return;
+  const scan = getScanCode(vkCode);
+  const isExt = isExtendedVK(vkCode);
+  const downFlags = isExt ? KEYEVENTF_EXTENDEDKEY : 0;
+  const upFlags = isExt ? (KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP) : KEYEVENTF_KEYUP;
+  keybd_event(vkCode, scan, downFlags, 0);
+  keybd_event(vkCode, scan, upFlags, 0);
+}
+
+function pressCombo(modifierVK, keyCharOrVK) {
+  if (!keybd_event) return;
+  const vk = typeof keyCharOrVK === 'string' ? keyCharOrVK.toUpperCase().charCodeAt(0) : keyCharOrVK;
+  const modScan = getScanCode(modifierVK);
+  const vkScan = getScanCode(vk);
+  const modExt = isExtendedVK(modifierVK);
+  const vkExt = isExtendedVK(vk);
+  const modDown = modExt ? KEYEVENTF_EXTENDEDKEY : 0;
+  const modUp = modExt ? (KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP) : KEYEVENTF_KEYUP;
+  const vkDown = vkExt ? KEYEVENTF_EXTENDEDKEY : 0;
+  const vkUp = vkExt ? (KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP) : KEYEVENTF_KEYUP;
+  keybd_event(modifierVK, modScan, modDown, 0);
+  keybd_event(vk, vkScan, vkDown, 0);
+  keybd_event(vk, vkScan, vkUp, 0);
+  keybd_event(modifierVK, modScan, modUp, 0);
 }
 
 function moveMouseRelative(dx, dy) {
@@ -109,21 +157,6 @@ function mouseScroll(dy) {
   mouse_event(MOUSEEVENTF_WHEEL, 0, 0, wheelUnits, 0);
 }
 
-function pressVK(vkCode) {
-  if (!keybd_event) return;
-  keybd_event(vkCode, 0, 0, 0);
-  keybd_event(vkCode, 0, KEYEVENTF_KEYUP, 0);
-}
-
-function pressCombo(modifierVK, keyCharOrVK) {
-  if (!keybd_event) return;
-  const vk = typeof keyCharOrVK === 'string' ? keyCharOrVK.toUpperCase().charCodeAt(0) : keyCharOrVK;
-  keybd_event(modifierVK, 0, 0, 0);
-  keybd_event(vk, 0, 0, 0);
-  keybd_event(vk, 0, KEYEVENTF_KEYUP, 0);
-  keybd_event(modifierVK, 0, KEYEVENTF_KEYUP, 0);
-}
-
 function typeText(text) {
   if (!keybd_event) return;
   for (const char of text) {
@@ -136,13 +169,31 @@ function typeText(text) {
 }
 
 function pressSpecialKey(keyType) {
-  const k = keyType.toLowerCase().trim();
-  if (k === 'backspace') pressVK(VK_BACK);
+  if (!keyType) return;
+  const k = String(keyType).toLowerCase().trim();
+
+  // Multi-key combos joined by '+'
+  if (k.includes('+')) {
+    const parts = k.split('+');
+    let modVK = VK_CONTROL;
+    if (parts[0] === 'alt') modVK = VK_MENU;
+    else if (parts[0] === 'shift') modVK = VK_SHIFT;
+    else if (parts[0] === 'win' || parts[0] === 'windows') modVK = VK_LWIN;
+
+    const secondKey = parts[1].trim();
+    if (secondKey === 'tab') pressCombo(modVK, VK_TAB);
+    else if (secondKey === 'f4') pressCombo(modVK, VK_F4);
+    else if (secondKey === 'esc') pressCombo(modVK, VK_ESCAPE);
+    else pressCombo(modVK, secondKey);
+    return;
+  }
+
+  if (k === 'backspace' || k === 'back') pressVK(VK_BACK);
   else if (k === 'enter' || k === 'return') pressVK(VK_RETURN);
   else if (k === 'space') pressVK(VK_SPACE);
   else if (k === 'tab') pressVK(VK_TAB);
   else if (k === 'escape' || k === 'esc') pressVK(VK_ESCAPE);
-  else if (k === 'delete') pressVK(VK_DELETE);
+  else if (k === 'delete' || k === 'del') pressVK(VK_DELETE);
   else if (k === 'shift') pressVK(VK_SHIFT);
   else if (k === 'alt') pressVK(VK_MENU);
   else if (k === 'win' || k === 'windows') pressVK(VK_LWIN);
@@ -151,15 +202,7 @@ function pressSpecialKey(keyType) {
   else if (k === 'down' || k === 'arrowdown') pressVK(VK_DOWN);
   else if (k === 'left' || k === 'arrowleft') pressVK(VK_LEFT);
   else if (k === 'right' || k === 'arrowright') pressVK(VK_RIGHT);
-  else if (k === 'ctrl+a' || k === 'selectall') pressCombo(VK_CONTROL, 'A');
-  else if (k === 'ctrl+c' || k === 'copy') pressCombo(VK_CONTROL, 'C');
-  else if (k === 'ctrl+v' || k === 'paste') pressCombo(VK_CONTROL, 'V');
-  else if (k === 'ctrl+z' || k === 'undo') pressCombo(VK_CONTROL, 'Z');
-  else if (k === 'ctrl+y' || k === 'redo') pressCombo(VK_CONTROL, 'Y');
-  else if (k === 'ctrl+s' || k === 'save') pressCombo(VK_CONTROL, 'S');
-  else if (k === 'alt+tab') pressCombo(VK_MENU, VK_TAB);
-  else if (k === 'alt+f4') pressCombo(VK_MENU, VK_F4);
-  else if (k === 'alt+space') pressCombo(VK_MENU, VK_SPACE);
+  else if (k.length === 1) pressVK(k.toUpperCase().charCodeAt(0));
 }
 
 
@@ -223,9 +266,48 @@ app.use(express.static(staticDir));
 
 const httpServer = http.createServer(app);
 
-// Handler function for WebSocket client messages
+function processControlMessage(data) {
+  const msgType = data.type;
+  if (msgType === 'move') {
+    moveMouseRelative(data.dx || 0, data.dy || 0);
+  } else if (msgType === 'click') {
+    mouseClick(data.button || 'left', data.action || 'click');
+  } else if (msgType === 'scroll') {
+    mouseScroll(data.dy || 0);
+  } else if (msgType === 'text') {
+    typeText(data.text || '');
+  } else if (msgType === 'key' || msgType === 'keycode') {
+    pressSpecialKey(data.key || '');
+  }
+}
+
 function handleWsConnection(ws) {
   let authenticated = false;
+  let sessionTimeoutTimer = null;
+  let currentTimeoutMins = 60; // Initial default session timeout is 1 hour (60 minutes)
+
+  function startSessionTimer(mins) {
+    if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
+    currentTimeoutMins = mins;
+    if (mins > 0) {
+      sessionTimeoutTimer = setTimeout(() => {
+        try {
+          ws.send(JSON.stringify({
+            type: 'session_timeout',
+            message: `Connection session timed out after ${mins} minute(s).`
+          }));
+          ws.close();
+        } catch (e) {}
+      }, mins * 60 * 1000);
+    }
+  }
+
+  // Start initial default 1-hour automatic session timeout
+  startSessionTimer(60);
+
+  ws.on('close', () => {
+    if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
+  });
 
   ws.on('message', (message) => {
     try {
@@ -240,7 +322,8 @@ function handleWsConnection(ws) {
           ws.send(JSON.stringify({
             type: 'auth_result',
             status: 'success',
-            message: 'Connected and Paired Successfully!'
+            message: 'Connected and Paired Successfully!',
+            sessionTimeoutMins: currentTimeoutMins
           }));
         } else {
           ws.send(JSON.stringify({
@@ -257,18 +340,19 @@ function handleWsConnection(ws) {
         else authenticated = true; // Auto-auth fallback for standard control messages
       }
 
-      if (msgType === 'move') {
-        moveMouseRelative(data.dx || 0, data.dy || 0);
-      } else if (msgType === 'click') {
-        mouseClick(data.button || 'left', data.action || 'click');
-      } else if (msgType === 'scroll') {
-        mouseScroll(data.dy || 0);
-      } else if (msgType === 'text') {
-        typeText(data.text || '');
-      } else if (msgType === 'key' || msgType === 'keycode') {
-        pressSpecialKey(data.key || '');
+      if (msgType === 'set_session_timeout') {
+        const mins = parseInt(data.timeoutMins, 10);
+        if (!isNaN(mins) && mins >= 0) {
+          startSessionTimer(mins);
+          ws.send(JSON.stringify({
+            type: 'session_timeout_updated',
+            timeoutMins: mins
+          }));
+        }
       } else if (msgType === 'ping') {
         ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp || 0 }));
+      } else {
+        processControlMessage(data);
       }
     } catch (err) {}
   });
@@ -304,7 +388,7 @@ httpServer.listen(PORT_HTTP, () => {
   console.log(`  [+] HTTP Web & WS Port:      ${PORT_HTTP}`);
   console.log(`  [*] CONNECT CODE (PIN):       ${SERVER_PIN}`);
   console.log('----------------------------------------------------------------');
-  console.log('  HOW TO CONNECT FROM YOUR MOBILE PHONE:');
+  console.log('  HOW TO CONNECT FROM LOCAL WIFI:');
   console.log(`  1. Connect phone to same WiFi network (${localIP})`);
   console.log(`  2. Instant Mobile Link (open in phone browser):`);
   console.log(`     ${quickLink}`);
@@ -318,9 +402,32 @@ httpServer.listen(PORT_HTTP, () => {
     });
   }
   console.log('----------------------------------------------------------------');
-  console.log('  [SCAN ME] QR CODE FOR MOBILE INSTANT CONNECT:');
-  qrcode.generate(quickLink, { small: true });
-  console.log('================================================================');
+  console.log('  [SCAN ME] LOCAL WIFI QR CODE:');
+  qrcode.toString(quickLink, { type: 'terminal', small: true }, (err, qrStr) => {
+    if (!err && qrStr) console.log(qrStr);
+  });
+
+  // Generate Universal Public Remote Internet Gateway & QR Code for 4G/5G / Different Networks
+  if (localtunnel) {
+    try {
+      localtunnel({ port: PORT_HTTP }, (err, tunnel) => {
+        if (!err && tunnel && tunnel.url) {
+          const publicUrl = `${tunnel.url}/?code=${SERVER_PIN}`;
+          console.log('================================================================');
+          console.log('  🌐 UNIVERSAL REMOTE INTERNET LINK (SCAN FROM ANY 4G/5G/NETWORK):');
+          console.log(`  ${publicUrl}`);
+          console.log('----------------------------------------------------------------');
+          console.log('  [SCAN ME] UNIVERSAL REMOTE QR CODE (ANY NETWORK / 4G / 5G):');
+          qrcode.toString(publicUrl, { type: 'terminal', small: true }, (e, qr) => {
+            if (!e && qr) console.log(qr);
+          });
+          console.log('================================================================');
+        }
+      });
+    } catch (e) {}
+  } else {
+    console.log('================================================================');
+  }
 });
 
 httpServer.on('error', (e) => {

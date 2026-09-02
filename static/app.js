@@ -86,8 +86,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Settings UI
     const sliderDpi = document.getElementById("slider-dpi");
     const lblDpiValue = document.getElementById("lbl-dpi-value");
+    const selectSessionTimeout = document.getElementById("select-session-timeout");
     const btnReconnect = document.getElementById("btn-menu-reconnect");
     const btnDisconnect = document.getElementById("btn-action-disconnect");
+    let clientSessionTimer = null;
 
     // --- PWA Service Worker Registration & Install Prompt ---
     if ("serviceWorker" in navigator) {
@@ -155,6 +157,56 @@ document.addEventListener("DOMContentLoaded", () => {
     inputIp.value = initialIp;
     inputPort.value = paramPort || savedPort || "5001";
     inputPin.value = paramPin || savedPin || "";
+
+    // Restore saved Connection Session Timeout (default 1 Hour / 60 minutes)
+    const savedTimeout = window.localStorage.getItem("virtualMouse.sessionTimeout") || "60";
+    if (selectSessionTimeout) {
+        selectSessionTimeout.value = savedTimeout;
+    }
+
+    function stopClientSessionTimer() {
+        if (clientSessionTimer) {
+            clearTimeout(clientSessionTimer);
+            clientSessionTimer = null;
+        }
+    }
+
+    function startClientSessionTimer(timeoutMins) {
+        stopClientSessionTimer();
+        if (timeoutMins > 0) {
+            clientSessionTimer = setTimeout(() => {
+                console.warn(`Connection session timed out (${timeoutMins} mins)`);
+                isUserDisconnect = true;
+                if (socket) { try { socket.close(); } catch (e) {} }
+                updateConnectionUI("disconnected", "Session Timed Out");
+                const label = timeoutMins >= 60 ? `${timeoutMins / 60} hour(s)` : `${timeoutMins} mins`;
+                showToast(`Session timed out (${label} limit reached). Reconnect whenever ready!`);
+                navigateTo("screen-home");
+            }, timeoutMins * 60 * 1000);
+        }
+    }
+
+    function updateActiveSessionTimeout(timeoutMins) {
+        window.localStorage.setItem("virtualMouse.sessionTimeout", String(timeoutMins));
+        if (isConnected && socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "set_session_timeout",
+                timeoutMins: timeoutMins
+            }));
+        }
+        if (isConnected) {
+            startClientSessionTimer(timeoutMins);
+        }
+    }
+
+    if (selectSessionTimeout) {
+        selectSessionTimeout.addEventListener("change", () => {
+            const mins = parseInt(selectSessionTimeout.value, 10) || 0;
+            updateActiveSessionTimeout(mins);
+            const label = mins === 0 ? "Disabled (Unlimited)" : (mins >= 60 ? `${mins / 60} Hour(s)` : `${mins} Mins`);
+            showToast(`Session Timeout set to: ${label}`);
+        });
+    }
 
     // Auto-connect on load if URL params or saved pairing credentials are present
     const targetAutoIp = paramIp || savedHost;
@@ -364,6 +416,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         // Heartbeat ack acknowledged
                         return;
                     }
+                    if (data.type === "session_timeout") {
+                        isUserDisconnect = true;
+                        stopHeartbeat();
+                        stopClientSessionTimer();
+                        if (socket) { try { socket.close(); } catch(e){} }
+                        updateConnectionUI("disconnected", "Session Timed Out");
+                        showToast(data.message || "Connection session timed out. Reconnect whenever ready!");
+                        navigateTo("screen-home");
+                        return;
+                    }
                     if (data.type === "auth_result") {
                         if (data.status === "success") {
                             clearTimeout(connectTimeout);
@@ -378,6 +440,11 @@ document.addEventListener("DOMContentLoaded", () => {
                             
                             updateConnectionUI("connected");
                             startHeartbeat();
+
+                            // Start session timeout timer based on user configured setting (default 1 Hour / 60 mins)
+                            const currentTimeoutMins = parseInt(selectSessionTimeout ? selectSessionTimeout.value : "60", 10) || 60;
+                            updateActiveSessionTimeout(currentTimeoutMins);
+
                             isUserDisconnect = false;
                             showToast("Connected & Paired with PC successfully!");
                             
@@ -402,6 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
             socket.onclose = () => {
                 clearTimeout(connectTimeout);
                 stopHeartbeat();
+                stopClientSessionTimer();
                 if (isConnected) {
                     updateConnectionUI("disconnected");
                     if (!isUserDisconnect) {
@@ -431,13 +499,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 600);
     }
 
+    let peerInstance = null;
+    let peerConn = null;
+    const btnConnectRemote = document.getElementById("btn-connect-remote");
+    const remoteConnectPin = document.getElementById("remote-connect-pin");
+
     function sendMessage(msgObj) {
         // Attach PIN if available
-        const currentPin = inputPin.value.trim();
+        const currentPin = inputPin.value.trim() || (remoteConnectPin ? remoteConnectPin.value.trim() : "");
         if (currentPin) msgObj.code = currentPin;
 
         if (isConnected && socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(msgObj));
+        } else if (isConnected && peerConn && peerConn.open) {
+            peerConn.send(JSON.stringify(msgObj));
         } else if (isSimulatorMode) {
             // Visual tactile feedback in interactive mode
             if (msgObj.type === "text") {
@@ -446,6 +521,87 @@ document.addEventListener("DOMContentLoaded", () => {
                 showToast(`Keycode: [${msgObj.key.toUpperCase()}]`);
             }
         }
+    }
+
+    if (btnConnectRemote) {
+        btnConnectRemote.addEventListener("click", () => {
+            const pin = remoteConnectPin ? remoteConnectPin.value.trim() : "";
+            if (!pin) {
+                showToast("Please enter your 4-digit Connect PIN (e.g. 1085)");
+                return;
+            }
+
+            updateConnectionUI("connecting");
+            btnConnectRemote.disabled = true;
+            btnConnectRemote.innerHTML = `<span class="status-indicator connecting-state" style="margin-right:8px;box-shadow:none;"></span> Connecting Remote (4G/5G)...`;
+
+            try {
+                if (typeof Peer !== "undefined") {
+                    if (peerInstance) peerInstance.destroy();
+                    peerInstance = new Peer({
+                        config: {
+                            iceServers: [
+                                { urls: "stun:stun.l.google.com:19302" },
+                                { urls: "stun:global.stun.twilio.com:3478" }
+                            ]
+                        }
+                    });
+
+                    peerInstance.on("open", (id) => {
+                        console.log("WebRTC Client Peer ID:", id);
+                        const targetPeerId = `virtual-mouse-pin-${pin}`;
+                        peerConn = peerInstance.connect(targetPeerId);
+
+                        peerConn.on("open", () => {
+                            lblDeviceTitle.textContent = `Remote PC (PIN: ${pin})`;
+                            lblDeviceAddress.textContent = "WebRTC 4G/5G Direct Relay";
+                            updateConnectionUI("connected");
+                            isUserDisconnect = false;
+                            showToast("Connected via Internet (4G/5G)!");
+                            btnConnectRemote.disabled = false;
+                            btnConnectRemote.innerHTML = `Connected Remote`;
+                            setTimeout(() => {
+                                navigateTo("screen-mouse");
+                            }, 600);
+                        });
+
+                        peerConn.on("error", (err) => {
+                            showToast("Remote connection error. Check PIN!");
+                            updateConnectionUI("disconnected", "Remote Connect Failed");
+                            btnConnectRemote.disabled = false;
+                            btnConnectRemote.innerHTML = `Connect Remote (4G/5G)`;
+                        });
+                    });
+
+                    peerInstance.on("error", (err) => {
+                        console.warn("PeerJS error:", err);
+                        const fallbackIp = inputIp.value.trim() || window.location.hostname;
+                        connectToServer(fallbackIp, "5000", pin);
+                        btnConnectRemote.disabled = false;
+                        btnConnectRemote.innerHTML = `Connect Remote (4G/5G)`;
+                    });
+                } else {
+                    connectToServer(inputIp.value.trim() || window.location.hostname, "5000", pin);
+                    btnConnectRemote.disabled = false;
+                    btnConnectRemote.innerHTML = `Connect Remote (4G/5G)`;
+                }
+            } catch (e) {
+                showToast("Initiating Remote Gateway Connection...");
+                connectToServer(inputIp.value.trim() || window.location.hostname, "5000", pin);
+                btnConnectRemote.disabled = false;
+                btnConnectRemote.innerHTML = `Connect Remote (4G/5G)`;
+            }
+        });
+    }
+
+    // Expandable Advanced WiFi Settings Drawer Toggle (IP, Port & Device Name)
+    const btnToggleAdvancedWifi = document.getElementById("btn-toggle-advanced-wifi");
+    const drawerAdvancedWifi = document.getElementById("drawer-advanced-wifi");
+    if (btnToggleAdvancedWifi && drawerAdvancedWifi) {
+        btnToggleAdvancedWifi.addEventListener("click", () => {
+            const isHidden = drawerAdvancedWifi.classList.toggle("hidden");
+            btnToggleAdvancedWifi.classList.toggle("collapsed", isHidden);
+        });
     }
 
     // Option 1: Connect button
@@ -884,6 +1040,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ================= Dedicated Keyboard & TextPad Tools =================
 
+    // Dual Mode Switcher Toggle (⚡ Live Auto-Typing vs 📝 Desktop TextPad)
+    const btnModeLive = document.getElementById("btn-mode-live");
+    const btnModeTextpad = document.getElementById("btn-mode-textpad");
+    const panelKbLive = document.getElementById("panel-kb-live");
+    const panelKbTextpad = document.getElementById("panel-kb-textpad");
+
+    if (btnModeLive && btnModeTextpad && panelKbLive && panelKbTextpad) {
+        btnModeLive.addEventListener("click", () => {
+            btnModeLive.classList.add("active");
+            btnModeTextpad.classList.remove("active");
+            panelKbLive.classList.remove("hidden");
+            panelKbLive.classList.add("active");
+            panelKbTextpad.classList.add("hidden");
+            panelKbTextpad.classList.remove("active");
+            if (kbLiveInput) kbLiveInput.focus();
+        });
+
+        btnModeTextpad.addEventListener("click", () => {
+            btnModeTextpad.classList.add("active");
+            btnModeLive.classList.remove("active");
+            panelKbTextpad.classList.remove("hidden");
+            panelKbTextpad.classList.add("active");
+            panelKbLive.classList.add("hidden");
+            panelKbLive.classList.remove("active");
+            if (kbTextpadInput) kbTextpadInput.focus();
+        });
+    }
+
+    // Collapsible Accordion Headers for Keypad Sections (Primary Keys & PC Shortcuts)
+    const collapsibleHeaders = document.querySelectorAll(".keypad-section-label.collapsible-header");
+    collapsibleHeaders.forEach(header => {
+        header.addEventListener("click", () => {
+            const isCollapsed = header.classList.toggle("collapsed");
+            const targetContent = header.nextElementSibling;
+            if (targetContent && targetContent.classList.contains("collapsible-content")) {
+                if (isCollapsed) {
+                    targetContent.classList.add("hidden");
+                } else {
+                    targetContent.classList.remove("hidden");
+                }
+            }
+        });
+    });
+
     function triggerLivePulse() {
         if (pillLiveTransmitting) {
             pillLiveTransmitting.textContent = "Sent ⚡";
@@ -991,25 +1191,43 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("All text cleared");
     });
 
-    // Tool 3: Keycode Buttons & Modifiers
-    keycodeBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            const keyName = btn.getAttribute("data-key");
-            if (!keyName) return;
+    // Tool 3: Keycode Buttons & Modifiers (Global Event Delegation with touch optimization)
+    let lastKeypressTime = 0;
+    function handleKeycodeTrigger(e) {
+        const btn = e.target.closest(".keycode-btn");
+        if (!btn) return;
 
-            // Visual feedback
-            btn.classList.add("pressed");
-            setTimeout(() => btn.classList.remove("pressed"), 180);
+        const now = Date.now();
+        if (now - lastKeypressTime < 100) return;
+        lastKeypressTime = now;
 
-            if (navigator.vibrate) {
-                navigator.vibrate(25);
-            }
+        const keyName = btn.getAttribute("data-key");
+        if (!keyName) return;
 
-            sendMessage({
-                type: "keycode",
-                key: keyName
-            });
+        // Visual feedback
+        btn.classList.add("pressed");
+        setTimeout(() => btn.classList.remove("pressed"), 180);
+
+        if (navigator.vibrate) {
+            navigator.vibrate(25);
+        }
+
+        sendMessage({
+            type: "keycode",
+            key: keyName
         });
+    }
+
+    document.addEventListener("pointerdown", (e) => {
+        if (e.target.closest(".keycode-btn")) {
+            handleKeycodeTrigger(e);
+        }
+    });
+
+    document.addEventListener("click", (e) => {
+        if (e.target.closest(".keycode-btn")) {
+            handleKeycodeTrigger(e);
+        }
     });
 
     // ================= Settings Screen Logic =================
