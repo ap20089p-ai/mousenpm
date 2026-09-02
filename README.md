@@ -8,7 +8,7 @@ Transform your smartphone or tablet into a high-performance wireless trackpad, l
 
 ---
 
-## ✨ Features
+## ✨ Unified Features
 
 - 📱 **Progressive Web App (PWA)**: Installable directly onto iOS & Android home screens for a full-screen, native app feel with offline caching.
 - 📷 **Instant QR Code Scan**: Launch `npm start` or `npx .` and scan the terminal's ASCII QR code directly with your mobile camera to auto-connect with PIN pre-filled.
