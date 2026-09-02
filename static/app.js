@@ -653,9 +653,7 @@ document.addEventListener("DOMContentLoaded", () => {
     bindClickButton(btnLeftClick, "left");
     bindClickButton(btnRightClick, "right");
 
-<<<<<<< HEAD
-    // ================= Auto-Scroll & Scroll Wheel Controller ==========
-=======
+    // ================= Auto-Scroll & Scroll Wheel Controller =================
     // ================= Auto-Scroll & Scroll Wheel Controller =================
     let autoScrollInterval = null;
     let holdScrollTimeout = null;

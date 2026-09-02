@@ -10,7 +10,6 @@ const koffi = require('koffi');
 let PORT_HTTP = parseInt(process.env.PORT || '5000', 10);
 let PORT_WS = parseInt(process.env.WS_PORT || '5001', 10);
 
-<<<<<<< HEAD
 // DEBUG flag: set env var DEBUG=1 or pass --debug to enable verbose logs
 const DEBUG = process.env.DEBUG === '1' || process.argv.includes('--debug');
 function log(...args) { if (DEBUG) console.log(...args); }
@@ -18,9 +17,6 @@ function logAlways(...args) { console.log(...args); } // For essential startup i
 
 // Parse optional CLI arguments (--version, --pin=, --port=)
 const pkg = require('./package.json');
-=======
-// Parse optional CLI --pin= or --port= argument or generate random 4-digit PIN
->>>>>>> parent of f13ef9f (chore: initialize project dependencies and update application configuration)
 let SERVER_PIN = Math.floor(1000 + Math.random() * 9000).toString();
 for (const arg of process.argv) {
   if (arg.startsWith('--pin=')) {
@@ -263,7 +259,6 @@ app.use(express.static(staticDir));
 
 const httpServer = http.createServer(app);
 
-<<<<<<< HEAD
 function processControlMessage(data) {
   const msgType = data.type;
   if (msgType === 'move') {
@@ -309,11 +304,6 @@ function handleWsConnection(ws, req) {
   ws.on('close', () => {
     if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
   });
-=======
-// Handler function for WebSocket client messages
-function handleWsConnection(ws) {
-  let authenticated = false;
->>>>>>> parent of f13ef9f (chore: initialize project dependencies and update application configuration)
 
   ws.on('message', (message) => {
     try {
@@ -398,7 +388,6 @@ httpServer.listen(PORT_HTTP, () => {
   const quickLink = `http://${localIP}:${PORT_HTTP}/?ip=${localIP}&port=${PORT_HTTP}&code=${SERVER_PIN}`;
   const qrImageLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(quickLink)}`;
 
-<<<<<<< HEAD
   logAlways('================================================================');
   logAlways('        [+] VIRTUAL MOUSE & KEYBOARD SERVER ACTIVE');
   logAlways('================================================================');
@@ -412,21 +401,6 @@ httpServer.listen(PORT_HTTP, () => {
   logAlways(`     ${quickLink}`);
   logAlways(`  3. View QR Code Image:`);
   logAlways(`     ${qrImageLink}`);
-=======
-  console.log('================================================================');
-  console.log('        [+] VIRTUAL MOUSE & KEYBOARD SERVER ACTIVE');
-  console.log('================================================================');
-  console.log(`  [+] Primary Mobile IP (Wi-Fi): ${localIP}`);
-  console.log(`  [+] HTTP Web & WS Port:      ${PORT_HTTP}`);
-  console.log(`  [*] CONNECT CODE (PIN):       ${SERVER_PIN}`);
-  console.log('----------------------------------------------------------------');
-  console.log('  HOW TO CONNECT FROM YOUR MOBILE PHONE:');
-  console.log(`  1. Connect phone to same WiFi network (${localIP})`);
-  console.log(`  2. Instant Mobile Link (open in phone browser):`);
-  console.log(`     ${quickLink}`);
-  console.log(`  3. View QR Code Image:`);
-  console.log(`     ${qrImageLink}`);
->>>>>>> parent of f13ef9f (chore: initialize project dependencies and update application configuration)
   if (netInterfaces.length > 1) {
     logAlways('----------------------------------------------------------------');
     logAlways('  ALL DETECTED NETWORK INTERFACES:');
@@ -434,40 +408,10 @@ httpServer.listen(PORT_HTTP, () => {
       logAlways(`  - [${iface.name}]: http://${iface.address}:${PORT_HTTP}/?ip=${iface.address}&port=${PORT_HTTP}&code=${SERVER_PIN}`);
     });
   }
-<<<<<<< HEAD
   logAlways('----------------------------------------------------------------');
-  logAlways('  [SCAN ME] LOCAL WIFI QR CODE:');
-  qrcode.toString(quickLink, { type: 'terminal', small: true }, (err, qrStr) => {
-    if (!err && qrStr) logAlways(qrStr);
-  });
-
-  // Generate Universal Public Remote Internet Gateway & QR Code for 4G/5G / Different Networks
-  if (localtunnel) {
-    try {
-      localtunnel({ port: PORT_HTTP }, (err, tunnel) => {
-        if (!err && tunnel && tunnel.url) {
-          const publicUrl = `${tunnel.url}/?code=${SERVER_PIN}`;
-          logAlways('================================================================');
-          logAlways('  🌐 UNIVERSAL REMOTE INTERNET LINK (SCAN FROM ANY 4G/5G/NETWORK):');
-          logAlways(`  ${publicUrl}`);
-          logAlways('----------------------------------------------------------------');
-          logAlways('  [SCAN ME] UNIVERSAL REMOTE QR CODE (ANY NETWORK / 4G / 5G):');
-          qrcode.toString(publicUrl, { type: 'terminal', small: true }, (e, qr) => {
-            if (!e && qr) logAlways(qr);
-          });
-          logAlways('================================================================');
-        }
-      });
-    } catch (e) {}
-  } else {
-    logAlways('================================================================');
-  }
-=======
-  console.log('----------------------------------------------------------------');
-  console.log('  [SCAN ME] QR CODE FOR MOBILE INSTANT CONNECT:');
+  logAlways('  [SCAN ME] QR CODE FOR MOBILE INSTANT CONNECT:');
   qrcode.generate(quickLink, { small: true });
-  console.log('================================================================');
->>>>>>> parent of f13ef9f (chore: initialize project dependencies and update application configuration)
+  logAlways('================================================================');
 });
 
 httpServer.on('error', (e) => {
