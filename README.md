@@ -33,7 +33,7 @@ Transform your smartphone or tablet into a high-performance wireless trackpad, l
 
 1. **Instant Execution via npx (Zero Installation Required)**:
    ```powershell
-   npx virtual-mouse-pwa
+   npx virtual-mouse-app
    ```
    or in current directory:
    ```powershell
@@ -75,97 +75,3 @@ Transform your smartphone or tablet into a high-performance wireless trackpad, l
   node server.js --port=8080
   ```
 - **Firewall Prompt**: Ensure Windows Firewall allows Node.js to communicate on private/home WiFi networks.
-
----
-
-## 📦 Publishing to npm Registry
-
-Follow these steps to publish or update the package to the [npm public registry](https://www.npmjs.com/).
-
-### 1. Login to npm
-Log in with your npm account credentials:
-```powershell
-npm login
-```
-You will be prompted for your **username**, **password**, and **email**. If you have 2FA enabled, enter your OTP too.
-
----
-
-### 2. Verify package before publishing (Dry Run)
-Preview exactly what files will be uploaded without actually publishing:
-```powershell
-npm publish --dry-run
-```
-This shows the file list and package size. Check for unwanted files.
-
----
-
-### 3. Bump the version number
-Before every publish, update the version in [`package.json`](package.json):
-
-| Command | What it does | Example result |
-|---|---|---|
-| `npm version patch` | Bug fix / small tweak | `1.0.1` → `1.0.2` |
-| `npm version minor` | New feature added | `1.0.2` → `1.1.0` |
-| `npm version major` | Breaking / major release | `1.1.0` → `2.0.0` |
-
-```powershell
-# Example: bump patch version
-npm version patch
-```
-
----
-
-### 4. Publish the package
-```powershell
-npm publish
-```
-For **scoped packages** (e.g. `@username/package`), publish as public:
-```powershell
-npm publish --access public
-```
-
----
-
-### 5. Verify it's live
-Check the published package on the registry:
-```powershell
-npm view virtual-mouse-pwa
-```
-Or open in browser: `https://www.npmjs.com/package/virtual-mouse-pwa`
-
----
-
-### 6. Update an existing published version
-```powershell
-# 1. Make your code changes
-# 2. Bump the version
-npm version patch
-
-# 3. Publish the update
-npm publish
-```
-
----
-
-### 7. Unpublish a specific version (within 72 hours)
-```powershell
-npm unpublish virtual-mouse-pwa@1.0.2
-```
-
-> **Note:** npm does not allow unpublishing after 72 hours to protect dependent users.
-
----
-
-## 🔗 Using the Published Package
-
-Once published, anyone can run it instantly with no installation:
-```powershell
-npx virtual-mouse-pwa
-```
-Or install it globally:
-```powershell
-npm install -g virtual-mouse-pwa
-virtual-mouse-pwa
-```
-

@@ -813,47 +813,6 @@ html, body {
     50% { opacity: 1; }
 }
 
-/* Advanced Settings Drawer (IP, Port & Device Name) */
-.advanced-toggle-btn {
-    width: 100%;
-    margin-top: 14px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px dashed var(--border-color, rgba(255,255,255,0.15));
-    border-radius: 12px;
-    padding: 10px 14px;
-    color: var(--text-secondary, #9ca3af);
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: all 0.2s ease;
-}
-
-.advanced-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--color-accent, #00f0ff);
-    color: var(--color-accent, #00f0ff);
-}
-
-.advanced-toggle-btn.collapsed .accordion-arrow-icon {
-    transform: rotate(-90deg);
-}
-
-.advanced-settings-drawer {
-    margin-top: 14px;
-    padding: 14px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border-color, rgba(255,255,255,0.1));
-    border-radius: 12px;
-    transition: all 0.25s ease-in-out;
-}
-
-.advanced-settings-drawer.hidden {
-    display: none !important;
-}
-
 /* Button styling */
 .primary-btn {
     width: 100%;
@@ -1290,87 +1249,6 @@ input:checked + .slider-round:before {
 }
 
 
-/* Unified Keyboard Mode Switcher Bar */
-.kb-mode-switcher-bar {
-    display: flex;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--border-color, rgba(255,255,255,0.1));
-    border-radius: 12px;
-    padding: 4px;
-    margin-bottom: 16px;
-    gap: 4px;
-}
-
-.kb-mode-btn {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 9px 12px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--text-secondary, #9ca3af);
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.kb-mode-btn.active {
-    background: rgba(0, 240, 255, 0.12);
-    color: var(--color-accent, #00f0ff);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    border-color: rgba(0, 240, 255, 0.3);
-}
-
-.kb-mode-panel.hidden {
-    display: none !important;
-}
-
-.kb-mode-panel.active {
-    display: block;
-    animation: fadeInPanel 0.2s ease-in-out;
-}
-
-@keyframes fadeInPanel {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Collapsible Keypad Accordion Headers */
-.keypad-section-label.collapsible-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    user-select: none;
-    padding: 6px 0;
-    transition: color 0.2s ease;
-}
-
-.keypad-section-label.collapsible-header:hover {
-    color: var(--color-accent, #00f0ff);
-}
-
-.accordion-arrow-icon {
-    transition: transform 0.25s ease;
-    color: var(--text-secondary);
-}
-
-.keypad-section-label.collapsible-header:hover .accordion-arrow-icon {
-    color: var(--color-accent, #00f0ff);
-}
-
-.keypad-section-label.collapsible-header.collapsed .accordion-arrow-icon {
-    transform: rotate(-90deg);
-}
-
-.collapsible-content.hidden {
-    display: none !important;
-}
-
 /* ================= 4. Settings Screen ================= */
 .settings-group-label {
     font-size: 0.8rem;
@@ -1401,29 +1279,6 @@ input:checked + .slider-round:before {
 
 .setting-row:last-child {
     border-bottom: none;
-}
-
-.custom-select {
-    background-color: rgba(255, 255, 255, 0.06);
-    color: var(--text-primary, #fff);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    outline: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.custom-select:focus, .custom-select:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: var(--color-accent, #00f0ff);
-}
-
-.custom-select option {
-    background-color: #121212;
-    color: #fff;
 }
 
 .setting-row.clickable {

@@ -101,10 +101,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Settings UI
     const sliderDpi = document.getElementById("slider-dpi");
     const lblDpiValue = document.getElementById("lbl-dpi-value");
-    const selectSessionTimeout = document.getElementById("select-session-timeout");
     const btnReconnect = document.getElementById("btn-menu-reconnect");
     const btnDisconnect = document.getElementById("btn-action-disconnect");
-    let clientSessionTimer = null;
 
     // --- Mode Detection & Switching ---
     const urlParams = new URLSearchParams(window.location.search);
@@ -169,56 +167,6 @@ document.addEventListener("DOMContentLoaded", () => {
     inputIp.value = initialIp;
     inputPort.value = paramPort || savedPort || "5001";
     inputPin.value = paramPin || savedPin || "";
-
-    // Restore saved Connection Session Timeout (default 1 Hour / 60 minutes)
-    const savedTimeout = window.localStorage.getItem("virtualMouse.sessionTimeout") || "60";
-    if (selectSessionTimeout) {
-        selectSessionTimeout.value = savedTimeout;
-    }
-
-    function stopClientSessionTimer() {
-        if (clientSessionTimer) {
-            clearTimeout(clientSessionTimer);
-            clientSessionTimer = null;
-        }
-    }
-
-    function startClientSessionTimer(timeoutMins) {
-        stopClientSessionTimer();
-        if (timeoutMins > 0) {
-            clientSessionTimer = setTimeout(() => {
-                console.warn(`Connection session timed out (${timeoutMins} mins)`);
-                isUserDisconnect = true;
-                if (socket) { try { socket.close(); } catch (e) {} }
-                updateConnectionUI("disconnected", "Session Timed Out");
-                const label = timeoutMins >= 60 ? `${timeoutMins / 60} hour(s)` : `${timeoutMins} mins`;
-                showToast(`Session timed out (${label} limit reached). Reconnect whenever ready!`);
-                navigateTo("screen-home");
-            }, timeoutMins * 60 * 1000);
-        }
-    }
-
-    function updateActiveSessionTimeout(timeoutMins) {
-        window.localStorage.setItem("virtualMouse.sessionTimeout", String(timeoutMins));
-        if (isConnected && socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({
-                type: "set_session_timeout",
-                timeoutMins: timeoutMins
-            }));
-        }
-        if (isConnected) {
-            startClientSessionTimer(timeoutMins);
-        }
-    }
-
-    if (selectSessionTimeout) {
-        selectSessionTimeout.addEventListener("change", () => {
-            const mins = parseInt(selectSessionTimeout.value, 10) || 0;
-            updateActiveSessionTimeout(mins);
-            const label = mins === 0 ? "Disabled (Unlimited)" : (mins >= 60 ? `${mins / 60} Hour(s)` : `${mins} Mins`);
-            showToast(`Session Timeout set to: ${label}`);
-        });
-    }
 
     // Auto-connect on load if URL params or saved pairing credentials are present
     const targetAutoIp = paramIp || savedHost;
@@ -498,16 +446,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         // Heartbeat ack acknowledged
                         return;
                     }
-                    if (data.type === "session_timeout") {
-                        isUserDisconnect = true;
-                        stopHeartbeat();
-                        stopClientSessionTimer();
-                        if (socket) { try { socket.close(); } catch(e){} }
-                        updateConnectionUI("disconnected", "Session Timed Out");
-                        showToast(data.message || "Connection session timed out. Reconnect whenever ready!");
-                        navigateTo("screen-home");
-                        return;
-                    }
                     if (data.type === "auth_result") {
                         if (data.status === "success") {
                             clearTimeout(connectTimeout);
@@ -522,11 +460,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             
                             updateConnectionUI("connected");
                             startHeartbeat();
-
-                            // Start session timeout timer based on user configured setting (default 1 Hour / 60 mins)
-                            const currentTimeoutMins = parseInt(selectSessionTimeout ? selectSessionTimeout.value : "60", 10) || 60;
-                            updateActiveSessionTimeout(currentTimeoutMins);
-
                             isUserDisconnect = false;
                             showToast("Connected & Paired with PC successfully!");
                             
@@ -551,7 +484,6 @@ document.addEventListener("DOMContentLoaded", () => {
             socket.onclose = () => {
                 clearTimeout(connectTimeout);
                 stopHeartbeat();
-                stopClientSessionTimer();
                 if (isConnected) {
                     updateConnectionUI("disconnected");
                     if (!isUserDisconnect) {
@@ -575,105 +507,17 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => navigateTo("screen-mouse"), 500);
     }
 
-    let peerInstance = null;
-    let peerConn = null;
-    const btnConnectRemote = document.getElementById("btn-connect-remote");
-    const remoteConnectPin = document.getElementById("remote-connect-pin");
-
     function sendMessage(msgObj) {
         // Attach PIN if available
-        const currentPin = inputPin.value.trim() || (remoteConnectPin ? remoteConnectPin.value.trim() : "");
+        const currentPin = inputPin.value.trim();
         if (currentPin) msgObj.code = currentPin;
 
         if (isConnected && socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(msgObj));
-        } else if (isConnected && peerConn && peerConn.open) {
-            peerConn.send(JSON.stringify(msgObj));
         } else if (isSimulatorMode) {
             if (msgObj.type === "text") showToast(`Transmitted: "${msgObj.text}"`);
             else if (msgObj.type === "keycode" || msgObj.type === "key") showToast(`Keycode: [${msgObj.key.toUpperCase()}]`);
         }
-    }
-
-    if (btnConnectRemote) {
-        btnConnectRemote.addEventListener("click", () => {
-            const pin = remoteConnectPin ? remoteConnectPin.value.trim() : "";
-            if (!pin) {
-                showToast("Please enter your 4-digit Connect PIN (e.g. 1085)");
-                return;
-            }
-
-            updateConnectionUI("connecting");
-            btnConnectRemote.disabled = true;
-            btnConnectRemote.innerHTML = `<span class="status-indicator connecting-state" style="margin-right:8px;box-shadow:none;"></span> Connecting Remote (4G/5G)...`;
-
-            try {
-                if (typeof Peer !== "undefined") {
-                    if (peerInstance) peerInstance.destroy();
-                    peerInstance = new Peer({
-                        config: {
-                            iceServers: [
-                                { urls: "stun:stun.l.google.com:19302" },
-                                { urls: "stun:global.stun.twilio.com:3478" }
-                            ]
-                        }
-                    });
-
-                    peerInstance.on("open", (id) => {
-                        console.log("WebRTC Client Peer ID:", id);
-                        const targetPeerId = `virtual-mouse-pin-${pin}`;
-                        peerConn = peerInstance.connect(targetPeerId);
-
-                        peerConn.on("open", () => {
-                            lblDeviceTitle.textContent = `Remote PC (PIN: ${pin})`;
-                            lblDeviceAddress.textContent = "WebRTC 4G/5G Direct Relay";
-                            updateConnectionUI("connected");
-                            isUserDisconnect = false;
-                            showToast("Connected via Internet (4G/5G)!");
-                            btnConnectRemote.disabled = false;
-                            btnConnectRemote.innerHTML = `Connected Remote`;
-                            setTimeout(() => {
-                                navigateTo("screen-mouse");
-                            }, 600);
-                        });
-
-                        peerConn.on("error", (err) => {
-                            showToast("Remote connection error. Check PIN!");
-                            updateConnectionUI("disconnected", "Remote Connect Failed");
-                            btnConnectRemote.disabled = false;
-                            btnConnectRemote.innerHTML = `Connect Remote (4G/5G)`;
-                        });
-                    });
-
-                    peerInstance.on("error", (err) => {
-                        console.warn("PeerJS error:", err);
-                        const fallbackIp = inputIp.value.trim() || window.location.hostname;
-                        connectToServer(fallbackIp, "5000", pin);
-                        btnConnectRemote.disabled = false;
-                        btnConnectRemote.innerHTML = `Connect Remote (4G/5G)`;
-                    });
-                } else {
-                    connectToServer(inputIp.value.trim() || window.location.hostname, "5000", pin);
-                    btnConnectRemote.disabled = false;
-                    btnConnectRemote.innerHTML = `Connect Remote (4G/5G)`;
-                }
-            } catch (e) {
-                showToast("Initiating Remote Gateway Connection...");
-                connectToServer(inputIp.value.trim() || window.location.hostname, "5000", pin);
-                btnConnectRemote.disabled = false;
-                btnConnectRemote.innerHTML = `Connect Remote (4G/5G)`;
-            }
-        });
-    }
-
-    // Expandable Advanced WiFi Settings Drawer Toggle (IP, Port & Device Name)
-    const btnToggleAdvancedWifi = document.getElementById("btn-toggle-advanced-wifi");
-    const drawerAdvancedWifi = document.getElementById("drawer-advanced-wifi");
-    if (btnToggleAdvancedWifi && drawerAdvancedWifi) {
-        btnToggleAdvancedWifi.addEventListener("click", () => {
-            const isHidden = drawerAdvancedWifi.classList.toggle("hidden");
-            btnToggleAdvancedWifi.classList.toggle("collapsed", isHidden);
-        });
     }
 
     // Option 1: Connect button
@@ -809,7 +653,244 @@ document.addEventListener("DOMContentLoaded", () => {
     bindClickButton(btnLeftClick, "left");
     bindClickButton(btnRightClick, "right");
 
+<<<<<<< HEAD
     // ================= Auto-Scroll & Scroll Wheel Controller ==========
+=======
+    // ================= Auto-Scroll & Scroll Wheel Controller =================
+    let autoScrollInterval = null;
+    let holdScrollTimeout = null;
+    let isHandsFreeAutoScrolling = false;
+    let handsFreeDirection = 0; // 1 for Up, -1 for Down
+
+    function animateNotch(amt) {
+        if (!scrollNotch) return;
+        const offset = amt > 0 ? -12 : 12;
+        scrollNotch.style.transform = `translateY(calc(-50% + ${offset}px))`;
+        setTimeout(() => {
+            scrollNotch.style.transform = "translateY(-50%)";
+        }, 120);
+    }
+
+    function startHoldingScroll(direction) {
+        stopAutoScroll();
+
+        // Immediate first step
+        const dy = direction * 4;
+        sendMessage({ type: "scroll", dy: dy });
+        animateNotch(dy);
+
+        const btn = direction > 0 ? btnScrollUp : btnScrollDown;
+        if (btn) btn.classList.add("auto-scrolling");
+
+        // Start continuous scrolling loop after initial hold threshold
+        holdScrollTimeout = setTimeout(() => {
+            autoScrollInterval = setInterval(() => {
+                sendMessage({ type: "scroll", dy: dy });
+                animateNotch(dy);
+            }, 60);
+        }, 220);
+    }
+
+    function stopHoldingScroll() {
+        if (holdScrollTimeout) {
+            clearTimeout(holdScrollTimeout);
+            holdScrollTimeout = null;
+        }
+        if (!isHandsFreeAutoScrolling && autoScrollInterval) {
+            clearInterval(autoScrollInterval);
+            autoScrollInterval = null;
+        }
+        if (btnScrollUp) btnScrollUp.classList.remove("auto-scrolling");
+        if (btnScrollDown) btnScrollDown.classList.remove("auto-scrolling");
+    }
+
+    function toggleHandsFreeAutoScroll(direction) {
+        if (isHandsFreeAutoScrolling && handsFreeDirection === direction) {
+            stopAutoScroll();
+            showToast("Auto-Scroll Stopped");
+            return;
+        }
+
+        stopAutoScroll();
+        isHandsFreeAutoScrolling = true;
+        handsFreeDirection = direction;
+
+        const dy = direction * 3;
+        const modeText = direction > 0 ? "AUTO ▲" : "AUTO ▼";
+        const lblScroll = document.querySelector(".scroll-label");
+        if (lblScroll) lblScroll.textContent = modeText;
+
+        const activeBtn = direction > 0 ? btnScrollUp : btnScrollDown;
+        if (activeBtn) activeBtn.classList.add("hands-free-active");
+
+        showToast(`Hands-Free Auto-Scroll ${direction > 0 ? "Up" : "Down"} Active`);
+
+        autoScrollInterval = setInterval(() => {
+            sendMessage({ type: "scroll", dy: dy });
+            animateNotch(dy);
+        }, 70);
+    }
+
+    function stopAutoScroll() {
+        if (holdScrollTimeout) {
+            clearTimeout(holdScrollTimeout);
+            holdScrollTimeout = null;
+        }
+        if (autoScrollInterval) {
+            clearInterval(autoScrollInterval);
+            autoScrollInterval = null;
+        }
+        isHandsFreeAutoScrolling = false;
+        handsFreeDirection = 0;
+
+        const lblScroll = document.querySelector(".scroll-label");
+        if (lblScroll) lblScroll.textContent = "Scroll";
+
+        if (btnScrollUp) {
+            btnScrollUp.classList.remove("auto-scrolling", "hands-free-active");
+        }
+        if (btnScrollDown) {
+            btnScrollDown.classList.remove("auto-scrolling", "hands-free-active");
+        }
+    }
+
+    function setupScrollArrow(btnEl, direction) {
+        if (!btnEl) return;
+        let lastTapTime = 0;
+
+        // Pointer press-and-hold + double tap toggle
+        btnEl.addEventListener("pointerdown", (e) => {
+            e.preventDefault();
+            const now = Date.now();
+            if (now - lastTapTime < 300) {
+                toggleHandsFreeAutoScroll(direction);
+                lastTapTime = 0;
+                return;
+            }
+            lastTapTime = now;
+
+            if (isHandsFreeAutoScrolling) {
+                stopAutoScroll();
+                return;
+            }
+
+            startHoldingScroll(direction);
+        });
+
+        btnEl.addEventListener("pointerup", (e) => {
+            e.preventDefault();
+            stopHoldingScroll();
+        });
+
+        btnEl.addEventListener("pointercancel", stopHoldingScroll);
+        btnEl.addEventListener("mouseleave", stopHoldingScroll);
+
+        // Standard click fallback
+        btnEl.addEventListener("click", (e) => {
+            if (!holdScrollTimeout && !autoScrollInterval) {
+                const dy = direction * 4;
+                sendMessage({ type: "scroll", dy: dy });
+                animateNotch(dy);
+            }
+        });
+    }
+
+    setupScrollArrow(btnScrollUp, 1);
+    setupScrollArrow(btnScrollDown, -1);
+
+    // Tap on central scroll slider toggles auto-scroll
+    const scrollSlider = document.querySelector(".scroll-indicator-slider");
+    if (scrollSlider) {
+        scrollSlider.addEventListener("click", () => {
+            if (isHandsFreeAutoScrolling) {
+                stopAutoScroll();
+                showToast("Auto-Scroll Stopped");
+            } else {
+                toggleHandsFreeAutoScroll(-1); // Default auto scroll down
+            }
+        });
+    }
+
+    // Stop hands-free auto scroll if user touches trackpad
+    trackpadArea.addEventListener("touchstart", () => {
+        if (isHandsFreeAutoScrolling) {
+            stopAutoScroll();
+        }
+    }, { passive: true });
+
+
+    // Prevent Backspace key from ever navigating back or closing browser tab
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" || e.keyCode === 8) {
+            const active = document.activeElement;
+            const isInputField = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+            if (!isInputField) {
+                e.preventDefault();
+            }
+        }
+    });
+
+    // ================= Dedicated Keyboard & TextPad Tools =================
+
+    function triggerLivePulse() {
+        if (pillLiveTransmitting) {
+            pillLiveTransmitting.textContent = "Sent ⚡";
+            setTimeout(() => {
+                pillLiveTransmitting.textContent = "Live Stream ⚡";
+            }, 300);
+        }
+    }
+
+    // Tool 1: Live Keystroke Auto-Typing (Supports Mobile Soft Keyboards & Backspace)
+    kbLiveInput.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" || e.keyCode === 8) {
+            e.preventDefault();
+            sendMessage({
+                type: "keycode",
+                key: "backspace"
+            });
+            kbLiveInput.value = "";
+            triggerLivePulse();
+        } else if (e.key === "Enter" || e.keyCode === 13) {
+            e.preventDefault();
+            sendMessage({
+                type: "keycode",
+                key: "enter"
+            });
+            kbLiveInput.value = "";
+            triggerLivePulse();
+        }
+    });
+
+    kbLiveInput.addEventListener("beforeinput", (e) => {
+        if (e.inputType === "deleteContentBackward" || e.inputType === "deleteContentForward") {
+            e.preventDefault();
+            sendMessage({
+                type: "keycode",
+                key: "backspace"
+            });
+            kbLiveInput.value = "";
+            triggerLivePulse();
+        }
+    });
+
+    kbLiveInput.addEventListener("input", (e) => {
+        if (e.inputType === "deleteContentBackward" || e.inputType === "deleteContentForward") {
+            kbLiveInput.value = "";
+            return;
+        }
+        const typedVal = e.target.value;
+        if (typedVal.length > 0) {
+            sendMessage({
+                type: "text",
+                text: typedVal
+            });
+            kbLiveInput.value = "";
+            triggerLivePulse();
+        }
+    });
+
+>>>>>>> parent of f13ef9f (chore: initialize project dependencies and update application configuration)
     const btnLiveEnter = document.getElementById("btn-live-enter");
     if (btnLiveEnter) {
         btnLiveEnter.addEventListener("click", () => {
@@ -851,43 +932,25 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("All text cleared");
     });
 
-    // Tool 3: Keycode Buttons & Modifiers (Global Event Delegation with touch optimization)
-    let lastKeypressTime = 0;
-    function handleKeycodeTrigger(e) {
-        const btn = e.target.closest(".keycode-btn");
-        if (!btn) return;
+    // Tool 3: Keycode Buttons & Modifiers
+    keycodeBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const keyName = btn.getAttribute("data-key");
+            if (!keyName) return;
 
-        const now = Date.now();
-        if (now - lastKeypressTime < 100) return;
-        lastKeypressTime = now;
+            // Visual feedback
+            btn.classList.add("pressed");
+            setTimeout(() => btn.classList.remove("pressed"), 180);
 
-        const keyName = btn.getAttribute("data-key");
-        if (!keyName) return;
+            if (navigator.vibrate) {
+                navigator.vibrate(25);
+            }
 
-        // Visual feedback
-        btn.classList.add("pressed");
-        setTimeout(() => btn.classList.remove("pressed"), 180);
-
-        if (navigator.vibrate) {
-            navigator.vibrate(25);
-        }
-
-        sendMessage({
-            type: "keycode",
-            key: keyName
+            sendMessage({
+                type: "keycode",
+                key: keyName
+            });
         });
-    }
-
-    document.addEventListener("pointerdown", (e) => {
-        if (e.target.closest(".keycode-btn")) {
-            handleKeycodeTrigger(e);
-        }
-    });
-
-    document.addEventListener("click", (e) => {
-        if (e.target.closest(".keycode-btn")) {
-            handleKeycodeTrigger(e);
-        }
     });
 
     // PWA Support
