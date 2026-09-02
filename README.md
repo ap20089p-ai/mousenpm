@@ -1,77 +1,85 @@
 # 📱 Virtual Mouse & Live Desktop Keyboard
 
-Transform your smartphone or tablet into a high-performance wireless trackpad, live keyboard, and desktop controller for your Windows PC over local WiFi.
+Transform your smartphone or tablet into a wireless trackpad, live keyboard, and desktop controller for your PC.
 
-![Platform](https://img.shields.io/badge/Platform-Windows%20PC-blue?style=for-the-badge&logo=windows)
-![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-brightgreen?style=for-the-badge&logo=nodedotjs)
-![PWA Ready](https://img.shields.io/badge/PWA-Installable-cyan?style=for-the-badge&logo=pwa)
+![Platform](https://img.shields.io/badge/Platform-Windows%20PC-blue)
+![PWA Ready](https://img.shields.io/badge/PWA-Installable-cyan)
+![Deploy](https://img.shields.io/badge/Deploy-Netlify-00ad9f)
 
 ---
 
-## ✨ Unified Features
+## ✨ Features
 
 - 📱 **Progressive Web App (PWA)**: Installable directly onto iOS & Android home screens for a full-screen, native app feel with offline caching.
-- 📷 **Instant QR Code Scan**: Launch `npm start` or `npx .` and scan the terminal's ASCII QR code directly with your mobile camera to auto-connect with PIN pre-filled.
-- 🖱️ **Ultra-Smooth Trackpad**:
-  - 1:1 cursor movement with Windows DPI scaling awareness via Win32 user32 bindings (`koffi`).
-  - Multi-touch gestures: Tap to click, Drag to move, Two-finger vertical scrolling.
-  - Left, Middle & Right click buttons with visual haptic feedback.
-  - Hardware-like scroll wheel slider with spring physics.
-- ⌨️ **Live Auto-Typing & Desktop TextPad**:
-  - **Live Auto-Typing**: Keystrokes are transmitted in real-time to your desktop's active window/notepad.
+- ⌨️ **Live Keyboard & Desktop TextPad**:
+  - **Live Auto-Typing**: Click the single text box and type on your phone; keystrokes are transmitted in real-time to your desktop's active window/notepad.
   - **Desktop TextPad**: Draft or paste full multi-line paragraphs/notes and send the entire block to your PC with one tap.
-  - **Quick Shortcuts**: Dedicated buttons for `Enter ↵`, `Backspace ⌫`, `Space ␣`, `Tab ⇥`, `Esc`, arrow keys (`▲`, `▼`, `◄`, `►`), and PC shortcuts (`Ctrl+A`, `Ctrl+C`, `Ctrl+V`, `Ctrl+Z`, `Ctrl+S`).
+  - **Quick Keycodes & Modifiers**: Dedicated buttons for `Enter ↵`, `Backspace ⌫`, `Space ␣`, `Tab ⇥`, `Esc`, navigation arrow keys (`▲`, `▼`, `◄`, `►`), and PC shortcuts (`Ctrl+A`, `Ctrl+C`, `Ctrl+V`, `Ctrl+Z`).
+- 🖱️ **Ultra-Smooth Trackpad**:
+  - 1:1 cursor movement with Windows DPI scaling awareness.
+  - Multi-touch gestures (Tap to click, Drag to move, Two-finger vertical scrolling).
+  - Left & Right click buttons with haptic visual feedback.
+  - Hardware-like scroll wheel slider with spring physics.
 - 🔑 **Dual Connection Modes & PIN Security**:
-  - **Option 1 (IP + Port + Connect PIN)**: 4-digit pairing PIN authentication for secure pairing over local WiFi.
-  - **Option 2 (Direct Web UI)**: Instant one-click connection via Quick Link parameter URL.
+  - **Option 1 (IP + Port + Connect PIN)**: 4-digit pairing PIN authentication for secure pairing over WiFi.
+  - **Option 2 (Direct Mouse & Keycode UI)**: Instant one-click access to all controller tools.
+- 🚀 **Netlify Ready**: Pre-configured `netlify.toml` for 1-click cloud deployment.
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Quick Start
 
-### Run via Node.js / npm
+### 1. Requirements
+- Python 3.8+ on Windows PC
+- `websockets` library
 
-1. **Instant Execution via npx (Zero Installation Required)**:
-   ```powershell
-   npx virtual-mouse-app
-   ```
-   or in current directory:
-   ```powershell
-   npx .
-   ```
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-2. **OR Run Locally with Node.js**:
-   ```powershell
-   npm install
-   npm start
-   ```
+### 2. Start Desktop Server
+```bash
+python server.py
+```
+
+Console will display your Local IP, WebSocket port, and **Connect PIN**:
+```text
+================================================================
+        🎮 VIRTUAL MOUSE & KEYBOARD SERVER ACTIVE
+================================================================
+  [+] Local IP Address:    192.168.1.15
+  [+] HTTP Web Port:       5000
+  [+] WebSocket Port:      5001
+  [🔑] CONNECT CODE (PIN): 5829
+================================================================
+```
+
+### 3. Connect from Mobile Phone
+1. Connect your phone to the same WiFi network as your PC.
+2. Open `http://<PC-IP>:5000` (or your Netlify URL) in your mobile browser.
+3. Enter your PC's IP and 4-digit Connect PIN and tap **Start & Connect** (or tap **Open Mouse & Keycode UI**).
+
+---
+
+## 🌐 Netlify Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for full instructions on deploying this PWA frontend to Netlify.
 
 ---
 
 ## 📂 Project Structure
 
 ```text
-├── package.json          # npm configuration & dependency metadata
-├── server.js             # Node.js HTTP, WebSocket & Win32 API server
-├── bin/
-│   └── cli.js            # Executable launcher for npx and global npm installation
-├── .npmignore            # Excludes build artifacts from npm package
-├── README.md             # Documentation
-└── static/               # Client PWA frontend
-    ├── index.html        # Web controller UI
-    ├── style.css         # Dark cyber aesthetic styles
-    ├── app.js            # Touch gesture handler & WebSocket client
-    ├── sw.js             # Service Worker offline cache
-    ├── manifest.json     # PWA Manifest
-    └── icons/            # App icons
+├── server.py             # Python server with ctypes simulation & WebSocket PIN auth
+├── requirements.txt      # Python dependencies (websockets)
+├── netlify.toml          # Netlify build configuration & PWA headers
+├── DEPLOYMENT.md         # Deployment & connection guide
+└── static/               # Client frontend (PWA)
+    ├── index.html        # Multi-screen web app UI (Connect, Mouse, Keyboard, Settings)
+    ├── style.css         # Dark neon cyber aesthetic styles
+    ├── app.js            # WebSocket client, PWA install, live typing & keycodes
+    ├── sw.js             # Service worker offline caching
+    ├── manifest.json     # PWA Web App Manifest
+    └── icons/            # App icons (SVG, 192x192, 512x512)
 ```
-
----
-
-## 🛠️ Troubleshooting
-
-- **Port in Use**: If port `5000` is in use, start the server on a different port using `--port=8080`:
-  ```powershell
-  node server.js --port=8080
-  ```
-- **Firewall Prompt**: Ensure Windows Firewall allows Node.js to communicate on private/home WiFi networks.
