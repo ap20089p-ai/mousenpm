@@ -24,7 +24,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.21.2",
+    "express": "^5.0.0",
     "express-rate-limit": "^7.5.0",
     "koffi": "^2.9.0",
     "qrcode": "^1.5.4",
