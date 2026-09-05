@@ -22,7 +22,7 @@ for (const arg of process.argv) {
     process.exit(0);
   } else if (arg === '--help' || arg === '-h') {
     console.log(`
-@abhi2007/vm2do v${pkg.version} — Wireless Mouse & Keyboard Server for Windows
+mouse-vm v${pkg.version} — Wireless Mouse & Keyboard Server for Windows
 
 Usage:
   vm2do [options]

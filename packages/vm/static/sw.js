@@ -3,7 +3,7 @@
  * Provides offline caching, fast load times, and PWA capabilities.
  * ------------------------------------------------------------- */
 
-const CACHE_NAME = "mouse-vm-v1.0.2";
+const CACHE_NAME = "mouse-vm-v1.0.9";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -59,7 +59,7 @@ self.addEventListener("fetch", (event) => {
               cache.put(event.request, networkResponse.clone());
             });
           }
-        }).catch(() => {});
+        }).catch(() => { });
         return cachedResponse;
       }
 

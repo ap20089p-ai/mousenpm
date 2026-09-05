@@ -1,19 +1,19 @@
 {
   "name": "mouse-vm",
-  "version": "1.0.2",
+  "version": "1.0.9",
   "description": "Transform your smartphone or tablet into a high-performance wireless trackpad, live keyboard, and desktop controller for Windows PC over WiFi.",
   "main": "server.js",
   "files": [
     "bin",
     "server.js",
-    "static"
+    "static",
+    "README.md"
   ],
   "bin": {
     "vm2do": "bin/cli.js",
     "vm": "bin/cli.js",
     "virtual-mouse": "bin/cli.js"
   },
-
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
