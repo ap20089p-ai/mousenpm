@@ -31,7 +31,7 @@
   "author": "abhi2007",
   "license": "MIT",
   "dependencies": {
-    "express": "^5.2.1",
+    "express": "^5.0.0",
     "express-rate-limit": "^8.7.0",
     "koffi": "^3.2.1",
     "qrcode": "^1.5.4",
