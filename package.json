@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "start": "npm start --workspace=vm2do"
+    "start": "npm start --workspace=mouse-vm"
   },
   "engines": {
     "node": ">=20.0.0 || >=22.0.0 || >=24.0.0"
