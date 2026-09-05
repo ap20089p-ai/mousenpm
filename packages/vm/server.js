@@ -25,7 +25,7 @@ for (const arg of process.argv) {
 mouse-vm v${pkg.version} — Wireless Mouse & Keyboard Server for Windows
 
 Usage:
-  vm2do [options]
+  mouse-vm [options]   (aliases: vm2do, vm, virtual-mouse)
 
 Options:
   --port=<n>           HTTP port (default: 5000). WS port = port + 1
@@ -41,10 +41,10 @@ Keyboard Shortcuts (in server terminal):
   Ctrl+C  or  q        Stop the server
 
 Examples:
-  vm2do
-  vm2do --port=8080
-  vm2do --pin=1234 --port=3000
-  vm2do --transfer-path=C:\\Users\\me\\Desktop\\files
+  mouse-vm
+  mouse-vm --port=8080
+  mouse-vm --pin=1234 --port=3000
+  mouse-vm --transfer-path=C:\\Users\\me\\Desktop\\files
 
 Install:
   npm install -g mouse-vm
