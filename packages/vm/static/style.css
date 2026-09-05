@@ -5,31 +5,42 @@
 
 /* Define CSS Variables */
 :root {
-    --bg-color: #080d16;          /* Deep space slate */
-    --bg-card: #0e1524;           /* Darker card backing */
-    --bg-card-hover: #151d30;     /* Highlighted card backing */
-    --bg-input: #111a2d;          /* Input box dark background */
+    --bg-color: #080d16;
+    /* Deep space slate */
+    --bg-card: #0e1524;
+    /* Darker card backing */
+    --bg-card-hover: #151d30;
+    /* Highlighted card backing */
+    --bg-input: #111a2d;
+    /* Input box dark background */
     --border-color: rgba(255, 255, 255, 0.06);
     --border-hover: rgba(34, 160, 255, 0.25);
-    
+
     /* Text Palette */
-    --text-primary: #f3f5f9;      /* Pure white-ish */
-    --text-secondary: #7e8fae;    /* Cool slate gray */
-    --text-muted: #4e5f7e;        /* Darker gray */
+    --text-primary: #f3f5f9;
+    /* Pure white-ish */
+    --text-secondary: #7e8fae;
+    /* Cool slate gray */
+    --text-muted: #4e5f7e;
+    /* Darker gray */
 
     /* Accent & Glow Colors */
-    --color-accent: #22a0ff;      /* Bright neon blue */
+    --color-accent: #22a0ff;
+    /* Bright neon blue */
     --color-accent-rgb: 34, 160, 255;
     --color-accent-glow: rgba(34, 160, 255, 0.35);
-    
-    --color-cyan: #00f0ff;        /* Electric cyan */
+
+    --color-cyan: #00f0ff;
+    /* Electric cyan */
     --color-cyan-rgb: 0, 240, 255;
     --color-cyan-glow: rgba(0, 240, 255, 0.4);
 
-    --color-success: #10b981;     /* Connected emerald green */
+    --color-success: #10b981;
+    /* Connected emerald green */
     --color-success-glow: rgba(16, 185, 129, 0.3);
-    
-    --color-danger: #ef4444;      /* Alert/Disconnect red */
+
+    --color-danger: #ef4444;
+    /* Alert/Disconnect red */
     --color-danger-glow: rgba(239, 68, 68, 0.3);
 
     --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -42,10 +53,12 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent; /* Remove mobile touch blue block */
+    -webkit-tap-highlight-color: transparent;
+    /* Remove mobile touch blue block */
 }
 
-html, body {
+html,
+body {
     width: 100%;
     height: 100%;
     background-color: #020408;
@@ -61,7 +74,8 @@ html, body {
 .app-container {
     position: relative;
     width: 100%;
-    max-width: 440px; /* Target typical phone widths */
+    max-width: 440px;
+    /* Target typical phone widths */
     height: 100%;
     max-height: 950px;
     background-color: var(--bg-color);
@@ -74,7 +88,8 @@ html, body {
 
 @media (min-width: 480px) {
     .app-container {
-        border-radius: 40px; /* Give phone frame look on desktop */
+        border-radius: 40px;
+        /* Give phone frame look on desktop */
         height: 90vh;
         margin: auto;
     }
@@ -109,8 +124,8 @@ html, body {
     overflow: hidden;
     opacity: 0;
     transform: translateY(15px);
-    transition: opacity var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1), 
-                transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1),
+        transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .screen.active {
@@ -131,6 +146,7 @@ html, body {
 .scroll-content::-webkit-scrollbar {
     width: 4px;
 }
+
 .scroll-content::-webkit-scrollbar-thumb {
     background-color: var(--border-color);
     border-radius: 4px;
@@ -196,9 +212,17 @@ html, body {
     animation: pulse-ripple 3.5s infinite cubic-bezier(0.1, 0.8, 0.3, 1);
 }
 
-.ripple-1 { animation-delay: 0s; }
-.ripple-2 { animation-delay: 1.2s; }
-.ripple-3 { animation-delay: 2.4s; }
+.ripple-1 {
+    animation-delay: 0s;
+}
+
+.ripple-2 {
+    animation-delay: 1.2s;
+}
+
+.ripple-3 {
+    animation-delay: 2.4s;
+}
 
 @keyframes pulse-ripple {
     0% {
@@ -208,6 +232,7 @@ html, body {
         transform: scale(0.8) translateY(-30px);
         filter: drop-shadow(0 0 5px var(--color-cyan-glow));
     }
+
     100% {
         width: 250px;
         height: 250px;
@@ -227,8 +252,15 @@ html, body {
 }
 
 @keyframes hover-float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
 }
 
 .splash-title {
@@ -240,7 +272,7 @@ html, body {
     -webkit-text-fill-color: transparent;
     margin-bottom: 12px;
     letter-spacing: -0.5px;
-    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
 }
 
 .splash-tagline {
@@ -315,7 +347,7 @@ html, body {
 .tab-btn.active {
     color: var(--text-primary);
     background-color: var(--bg-card);
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), 0 0 1px 1px rgba(34, 160, 255, 0.15);
 }
 
@@ -338,8 +370,15 @@ html, body {
 }
 
 @keyframes fade-in {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Input boxes styling */
@@ -390,7 +429,7 @@ html, body {
     box-shadow: 0 0 10px rgba(34, 160, 255, 0.15);
 }
 
-.input-wrapper input:focus + .input-icon {
+.input-wrapper input:focus+.input-icon {
     color: var(--color-accent);
 }
 
@@ -422,14 +461,22 @@ html, body {
 }
 
 .status-indicator.connecting-state {
-    background-color: #eab308; /* Yellow orange */
+    background-color: #eab308;
+    /* Yellow orange */
     box-shadow: 0 0 8px rgba(234, 179, 8, 0.4);
     animation: pulse-dot 1.5s infinite;
 }
 
 @keyframes pulse-dot {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
 /* Button styling */
@@ -571,8 +618,17 @@ html, body {
 }
 
 @keyframes usb-pulse {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px var(--color-accent)); }
-    50% { transform: scale(1.06); filter: drop-shadow(0 0 8px var(--color-accent)); }
+
+    0%,
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px var(--color-accent));
+    }
+
+    50% {
+        transform: scale(1.06);
+        filter: drop-shadow(0 0 8px var(--color-accent));
+    }
 }
 
 .usb-instructions h3 {
@@ -591,7 +647,8 @@ html, body {
 
 /* ================= 3. Mouse Control Screen ================= */
 .active-header {
-    height: 72px; /* Slightly taller for device status meta info */
+    height: 72px;
+    /* Slightly taller for device status meta info */
 }
 
 .header-dev-desc {
@@ -758,7 +815,8 @@ html, body {
 }
 
 /* Left Click Button highlight state */
-.left-click-part, .right-click-part {
+.left-click-part,
+.right-click-part {
     transition: opacity 0.1s ease;
 }
 
@@ -801,7 +859,8 @@ html, body {
     color: var(--text-primary);
 }
 
-.scroll-arrow:active, .scroll-arrow.auto-scrolling {
+.scroll-arrow:active,
+.scroll-arrow.auto-scrolling {
     color: var(--color-accent);
     transform: scale(1.2);
 }
@@ -816,6 +875,7 @@ html, body {
         transform: scale(1);
         filter: drop-shadow(0 0 2px #00f0ff);
     }
+
     100% {
         transform: scale(1.3);
         filter: drop-shadow(0 0 10px #00f0ff);
@@ -982,12 +1042,12 @@ html, body {
     border-radius: 50%;
 }
 
-input:checked + .slider-round {
+input:checked+.slider-round {
     background-color: rgba(34, 160, 255, 0.15);
     border-color: var(--color-accent);
 }
 
-input:checked + .slider-round:before {
+input:checked+.slider-round:before {
     transform: translateX(20px);
     background-color: var(--color-accent);
     box-shadow: 0 0 6px var(--color-accent-glow);
@@ -1010,8 +1070,13 @@ input:checked + .slider-round:before {
 }
 
 @keyframes fade-in-overlay {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .keyboard-sheet {
@@ -1147,7 +1212,8 @@ input:checked + .slider-round:before {
     transition: all 0.2s ease;
 }
 
-.custom-select:focus, .custom-select:hover {
+.custom-select:focus,
+.custom-select:hover {
     background-color: rgba(255, 255, 255, 0.1);
     border-color: var(--color-accent, #00f0ff);
 }
@@ -1166,7 +1232,7 @@ input:checked + .slider-round:before {
 }
 
 .setting-row.clickable:active {
-    background-color: rgba(255,255,255,0.02);
+    background-color: rgba(255, 255, 255, 0.02);
 }
 
 .setting-label-icon {
@@ -1598,8 +1664,17 @@ input:checked + .slider-round:before {
 }
 
 @keyframes pulseGlow {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.4); opacity: 0.5; }
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.4);
+        opacity: 0.5;
+    }
 }
 
 .pad-dot {
@@ -1839,14 +1914,40 @@ input:checked + .slider-round:before {
 }
 
 /* Action key nuances */
-.esc-btn { color: #f87171; }
-.tab-btn-key { color: #60a5fa; }
-.shift-btn { color: #c084fc; }
-.alt-btn { color: #f43f5e; }
-.win-btn { color: #38bdf8; }
-.fn-btn { color: #fbbf24; }
-.space-btn { color: #34d399; }
-.enter-btn { color: var(--color-cyan); font-weight: 800; font-size: 0.8rem; }
+.esc-btn {
+    color: #f87171;
+}
+
+.tab-btn-key {
+    color: #60a5fa;
+}
+
+.shift-btn {
+    color: #c084fc;
+}
+
+.alt-btn {
+    color: #f43f5e;
+}
+
+.win-btn {
+    color: #38bdf8;
+}
+
+.fn-btn {
+    color: #fbbf24;
+}
+
+.space-btn {
+    color: #34d399;
+}
+
+.enter-btn {
+    color: var(--color-cyan);
+    font-weight: 800;
+    font-size: 0.8rem;
+}
+
 .enter-btn-full {
     grid-column: span 4;
     background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(34, 160, 255, 0.22));
@@ -2154,7 +2255,8 @@ input:checked + .slider-round:before {
     line-height: 1.5;
 }
 
-.faq-answer ol, .faq-answer ul {
+.faq-answer ol,
+.faq-answer ul {
     margin-top: 6px;
     padding-left: 18px;
 }
@@ -2439,8 +2541,15 @@ input:checked + .slider-round:before {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* --- File Transfer UI --- */
@@ -2451,6 +2560,7 @@ input:checked + .slider-round:before {
     border-radius: 3px;
     overflow: hidden;
 }
+
 .progress-bar-fill {
     width: 0%;
     height: 100%;
@@ -2466,6 +2576,7 @@ input:checked + .slider-round:before {
     gap: 8px;
     margin-top: 8px;
 }
+
 .file-list-item {
     display: flex;
     justify-content: space-between;
@@ -2475,9 +2586,11 @@ input:checked + .slider-round:before {
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 .file-list-item:hover {
     background: rgba(255, 255, 255, 0.08);
 }
+
 .file-info {
     display: flex;
     flex-direction: column;
@@ -2485,6 +2598,7 @@ input:checked + .slider-round:before {
     flex: 1;
     margin-right: 12px;
 }
+
 .file-name {
     font-size: 0.95rem;
     font-weight: 500;
@@ -2493,16 +2607,19 @@ input:checked + .slider-round:before {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .file-size {
     font-size: 0.8rem;
     color: #94a3b8;
     margin-top: 2px;
 }
+
 .file-actions {
     display: flex;
     gap: 12px;
     align-items: center;
 }
+
 .file-action-btn {
     background: rgba(255, 255, 255, 0.1);
     border: none;
@@ -2517,14 +2634,17 @@ input:checked + .slider-round:before {
     transition: all 0.2s;
     padding: 0;
 }
+
 .file-action-btn svg {
     width: 18px;
     height: 18px;
 }
+
 .file-action-btn:hover {
     background: var(--color-cyan);
     color: #0f172a;
 }
+
 .file-action-btn.del-btn:hover {
     background: #ef4444;
     color: white;

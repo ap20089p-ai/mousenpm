@@ -64,6 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Bluetooth Screen
     const btnScanBluetooth = document.getElementById("btn-scan-bluetooth");
+    const btnConnectBtPan = document.getElementById("btn-connect-bt-pan");
     const bluetoothDevices = document.querySelectorAll(".device-item");
 
     // Mouse Controller UI
@@ -368,6 +369,53 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // --- USB Connect Button Handler ---
+    if (btnConnectUsb) {
+        btnConnectUsb.addEventListener("click", () => {
+            const pin = inputPin.value.trim();
+            if (!pin) {
+                showToast("Please enter the Connect PIN in the WiFi tab first!");
+                return;
+            }
+            // If they are on USB Tethering, window.location.hostname is the PC's USB IP.
+            // If they are using ADB Reverse, they likely loaded the page via 127.0.0.1 or localhost.
+            let usbIp = window.location.hostname;
+            if (!usbIp || usbIp === "") {
+                usbIp = "127.0.0.1";
+            }
+            const port = inputPort.value.trim() || "5001";
+            
+            showToast("Attempting USB Connection...");
+            connectToServer(usbIp, port, pin);
+        });
+    }
+
+    // --- Bluetooth Button Handlers ---
+    if (btnScanBluetooth) {
+        btnScanBluetooth.addEventListener("click", () => {
+            showToast("Web Browsers do not support TCP connections over standard Bluetooth! Please use 'Bluetooth Network (PAN)' below instead.", 4000);
+        });
+    }
+
+    if (btnConnectBtPan) {
+        btnConnectBtPan.addEventListener("click", () => {
+            const pin = inputPin.value.trim();
+            if (!pin) {
+                showToast("Please enter the Connect PIN in the WiFi tab first!");
+                return;
+            }
+            let btIp = window.location.hostname;
+            if (!btIp || btIp === "" || btIp === "localhost" || btIp === "127.0.0.1") {
+                showToast("Cannot auto-detect Bluetooth IP. Please enter it manually in the WiFi tab.");
+                return;
+            }
+            const port = inputPort.value.trim() || "5001";
+            
+            showToast("Attempting Bluetooth PAN Connection...");
+            connectToServer(btIp, port, pin);
+        });
+    }
+
     // Initial sync on load
 
     // --- Keep-Alive Ping & Auto-Disconnect Helpers ---
@@ -444,7 +492,12 @@ document.addEventListener("DOMContentLoaded", () => {
             socket = new WebSocket(`${wsProtocol}://${ip}:${wsPort}`);
             
             socket.onopen = () => {
-                const codeToSend = pin || inputPin.value.trim() || "DEMO";
+                const codeToSend = pin || inputPin.value.trim();
+                if (!codeToSend) {
+                    showToast("Please enter the Connect PIN first.");
+                    socket.close();
+                    return;
+                }
                 socket.send(JSON.stringify({
                     type: "auth",
                     code: codeToSend
@@ -501,7 +554,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (socket) socket.close();
                         }
                     }
-                } catch (err) {}
+                } catch (err) {
+                    console.error("[WS] Failed to parse message:", err);
+                }
             };
 
 
@@ -526,6 +581,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (e) {
             clearTimeout(connectTimeout);
             stopHeartbeat();
+            console.warn("[WS] WebSocket construction failed:", e);
             startSimulatorFallback("Cannot connect directly. Running Interactive Mode.");
         }
     }
@@ -571,62 +627,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // USB Connection trigger
-    btnConnectUsb.addEventListener("click", () => {
-        updateConnectionUI("connecting");
-        setTimeout(() => {
-            lblDeviceTitle.textContent = "USB Device Connection";
-            lblDeviceAddress.textContent = "Direct USB Cable Mode";
-            isSimulatorMode = true;
-            updateConnectionUI("simulated");
-            showToast("Connected via USB (Interactive)!");
-            navigateTo("screen-mouse");
-        }, 900);
-    });
-
-    // Real Web Bluetooth Scanner & PAN Network Handler
-    if (btnScanBluetooth) {
-        btnScanBluetooth.addEventListener("click", async () => {
-            if ("bluetooth" in navigator) {
-                try {
-                    btnScanBluetooth.innerHTML = `<span class="status-indicator connecting-state" style="margin-right:8px;box-shadow:none;"></span> Scanning Nearby Bluetooth...`;
-                    btnScanBluetooth.disabled = true;
-
-                    // Trigger browser native Web Bluetooth pairing picker
-                    const device = await navigator.bluetooth.requestDevice({
-                        acceptAllDevices: true
-                    });
-
-                    if (device) {
-                        lblDeviceTitle.textContent = device.name || "Bluetooth Device";
-                        lblDeviceAddress.textContent = "Direct Bluetooth Pair";
-                        isSimulatorMode = true;
-                        updateConnectionUI("simulated");
-                        showToast(`Paired with ${device.name || "Bluetooth Device"}!`);
-                        navigateTo("screen-mouse");
-                    }
-                } catch (err) {
-                    if (err.name !== "NotFoundError") {
-                        showToast("Bluetooth prompt cancelled or not granted.");
-                    }
-                } finally {
-                    btnScanBluetooth.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"></path></svg> Scan Bluetooth Devices`;
-                    btnScanBluetooth.disabled = false;
-                }
-            } else {
-                showToast("Web Bluetooth API is not supported in this browser. Use Bluetooth Tethering instead!");
-            }
-        });
-    }
-
-    const btnConnectBtPan = document.getElementById("btn-connect-bt-pan");
     if (btnConnectBtPan) {
         btnConnectBtPan.addEventListener("click", () => {
             // Connect to the PC's Bluetooth adapter IP
-            const btIp = "169.254.205.112";
+            const btIp = window.location.hostname || inputIp.value.trim() || "127.0.0.1";
             updateConnectionUI("connecting");
             showToast("Connecting via Bluetooth Network...");
-            connectToServer(btIp, "5001", inputPin.value.trim());
+            connectToServer(btIp, inputPort.value.trim() || "5001", inputPin.value.trim());
         });
     }
 
@@ -635,10 +642,10 @@ document.addEventListener("DOMContentLoaded", () => {
     btItems.forEach(device => {
         device.addEventListener("click", () => {
             const name = device.getAttribute("data-name") || "Windows PC (Bluetooth)";
-            const addr = device.getAttribute("data-ip") || "169.254.205.112";
+            const addr = device.getAttribute("data-ip") || window.location.hostname || "127.0.0.1";
             lblDeviceTitle.textContent = name;
             lblDeviceAddress.textContent = addr;
-            connectToServer(addr, "5001", inputPin.value.trim());
+            connectToServer(addr, inputPort.value.trim() || "5001", inputPin.value.trim());
         });
     });
 
@@ -1314,9 +1321,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     fetchFilesList(); // refresh list automatically
                 }, 1500);
             } else {
+                // Fix 4: 413 is now returned for oversized files — show a clear message
+                const friendly = xhr.status === 413
+                    ? "File too large! Maximum size is 200 MB."
+                    : "Upload failed (" + xhr.status + ")";
                 uploadPercent.textContent = "Error";
                 uploadProgressFill.style.background = "#ef4444";
-                showToast("Upload failed: " + xhr.responseText);
+                showToast(friendly);
                 setTimeout(() => {
                     uploadProgressContainer.style.display = "none";
                     uploadProgressFill.style.background = "var(--color-cyan)";
@@ -1377,20 +1388,42 @@ document.addEventListener("DOMContentLoaded", () => {
             const item = document.createElement("div");
             item.className = "file-list-item";
             
-            item.innerHTML = `
-                <div class="file-info">
-                    <span class="file-name" title="${f.name}">${f.name}</span>
-                    <span class="file-size">${sizeStr}</span>
-                </div>
-                <div class="file-actions">
-                    <a href="/api/files/${encodeURIComponent(f.name)}?pin=${encodeURIComponent(inputPin.value.trim())}" class="file-action-btn" download title="Download">
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    </a>
-                    <button class="file-action-btn del-btn" data-filename="${f.name}" title="Delete from PC">
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                </div>
-            `;
+            const fileInfo = document.createElement("div");
+            fileInfo.className = "file-info";
+
+            const fileNameSpan = document.createElement("span");
+            fileNameSpan.className = "file-name";
+            fileNameSpan.title = f.name;
+            fileNameSpan.textContent = f.name;
+
+            const fileSizeSpan = document.createElement("span");
+            fileSizeSpan.className = "file-size";
+            fileSizeSpan.textContent = sizeStr;
+
+            fileInfo.appendChild(fileNameSpan);
+            fileInfo.appendChild(fileSizeSpan);
+
+            const fileActions = document.createElement("div");
+            fileActions.className = "file-actions";
+
+            const downloadAnchor = document.createElement("a");
+            downloadAnchor.href = `/api/files/${encodeURIComponent(f.name)}?pin=${encodeURIComponent(inputPin.value.trim())}`;
+            downloadAnchor.className = "file-action-btn";
+            downloadAnchor.setAttribute("download", "");
+            downloadAnchor.title = "Download";
+            downloadAnchor.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "file-action-btn del-btn";
+            deleteBtn.setAttribute("data-filename", f.name);
+            deleteBtn.title = "Delete from PC";
+            deleteBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+
+            fileActions.appendChild(downloadAnchor);
+            fileActions.appendChild(deleteBtn);
+
+            item.appendChild(fileInfo);
+            item.appendChild(fileActions);
             fileListContainer.appendChild(item);
         });
 

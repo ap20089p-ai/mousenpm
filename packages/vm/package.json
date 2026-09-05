@@ -1,0 +1,41 @@
+{
+  "name": "virtual-mouse-app",
+  "version": "1.0.2",
+  "description": "Transform your smartphone or tablet into a high-performance wireless trackpad, live keyboard, and desktop controller for Windows PC over WiFi.",
+  "main": "server.js",
+  "bin": {
+    "vm": "bin/cli.js",
+    "virtual-mouse": "bin/cli.js",
+    "virtual-mouse-app": "bin/cli.js"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "virtual-mouse",
+    "trackpad",
+    "remote-keyboard",
+    "windows-controller",
+    "pwa",
+    "remote-mouse",
+    "wifi-mouse"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "koffi": "^2.9.0",
+    "qrcode": "^1.5.4",
+    "ws": "^8.18.0"
+  },
+  "overrides": {
+    "body-parser": "^1.20.3",
+    "send": "^0.19.0",
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

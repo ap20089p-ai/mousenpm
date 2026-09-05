@@ -6,6 +6,7 @@ const os = require('os');
 const fs = require('fs');
 const qrcode = require('qrcode');
 const koffi = require('koffi');
+const rateLimit = require('express-rate-limit');
 
 // --- Ports & Setup ---
 let PORT_HTTP = parseInt(process.env.PORT || '5000', 10);
@@ -239,9 +240,12 @@ const staticDir = path.join(__dirname, 'static');
 const app = express();
 
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', '*');
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'x-pin, x-file-name, Content-Type');
   next();
 });
 
@@ -260,15 +264,27 @@ function getSafeFilePath(filename) {
   
   let targetPath = path.join(TRANSFER_DIR, baseName);
   let counter = 1;
-  while (fs.existsSync(targetPath)) {
+  while (fs.existsSync(targetPath) && counter <= 100) {
     targetPath = path.join(TRANSFER_DIR, `${nameOnly}(${counter})${ext}`);
     counter++;
+  }
+  if (fs.existsSync(targetPath)) {
+    targetPath = path.join(TRANSFER_DIR, `${nameOnly}_${Date.now()}${ext}`);
   }
   return targetPath;
 }
 
+// --- Rate Limiter for API routes (Fix 2: brute-force protection) ---
+const pinLimiter = rateLimit({
+  windowMs: 60 * 1000,          // 1-minute rolling window
+  max: 10,                       // 10 requests per IP per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many attempts, please try again later.' }
+});
+
 // PIN Auth Middleware for APIs
-app.use('/api', (req, res, next) => {
+app.use('/api', pinLimiter, (req, res, next) => {
   if (req.method === 'OPTIONS') return next();
   const providedPin = req.headers['x-pin'] || req.query.pin;
   if (providedPin !== SERVER_PIN) {
@@ -277,18 +293,21 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// List Files
-app.get('/api/files', (req, res) => {
+// List Files (Fix 3: async fs — never blocks the event loop)
+app.get('/api/files', async (req, res) => {
   try {
-    const files = fs.readdirSync(TRANSFER_DIR);
-    const fileList = [];
-    for (const file of files) {
-      const stats = fs.statSync(path.join(TRANSFER_DIR, file));
-      if (stats.isFile()) {
-        fileList.push({ name: file, size: stats.size });
-      }
-    }
-    res.json(fileList);
+    const entries = await fs.promises.readdir(TRANSFER_DIR);
+    const settled = await Promise.all(
+      entries.map(async (name) => {
+        try {
+          const stat = await fs.promises.stat(path.join(TRANSFER_DIR, name));
+          return stat.isFile() ? { name, size: stat.size, mtime: stat.mtime } : null;
+        } catch {
+          return null; // file may have been deleted between readdir and stat
+        }
+      })
+    );
+    res.json(settled.filter(Boolean));
   } catch (err) {
     console.error('[!] Error listing files:', err);
     res.status(500).json({ error: 'Failed to list files' });
@@ -335,29 +354,39 @@ app.post('/api/upload', (req, res) => {
   req.on('data', chunk => {
     uploadedBytes += chunk.length;
     if (uploadedBytes > MAX_FILE_SIZE) {
-      req.destroy();
+      // Fix 4: send 413 before destroying so the client UI exits its uploading state
+      if (!res.headersSent) {
+        res.status(413).json({ error: 'File exceeds maximum allowed size (200 MB).' });
+      }
+      writeStream.destroy();
       if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
       console.error(`[!] Upload aborted for ${actualFileName} - Exceeded 200MB limit.`);
+      req.destroy();
       return;
     }
-    writeStream.write(chunk);
+    const canWrite = writeStream.write(chunk);
+    if (!canWrite) {
+      req.pause();
+      writeStream.once('drain', () => req.resume());
+    }
   });
 
   req.on('end', () => {
+    if (res.headersSent) return; // already responded (e.g. 413 path)
     writeStream.end();
-    if (uploadedBytes <= MAX_FILE_SIZE) {
-      const downloadLink = `http://localhost:${PORT_HTTP}/api/files/${encodeURIComponent(actualFileName)}?pin=${SERVER_PIN}`;
-      console.log(`[+] File uploaded from client: ${actualFileName} (${(uploadedBytes / 1024 / 1024).toFixed(2)} MB)`);
-      console.log(`    -> Download/View on PC: ${downloadLink}`);
-      res.json({ success: true, filename: actualFileName });
-    }
+    const downloadLink = `http://localhost:${PORT_HTTP}/api/files/${encodeURIComponent(actualFileName)}`;
+    console.log(`[+] File uploaded from client: ${actualFileName} (${(uploadedBytes / 1024 / 1024).toFixed(2)} MB)`);
+    console.log(`    -> Download/View on PC: ${downloadLink} (PIN required)`);
+    res.json({ success: true, filename: actualFileName });
   });
 
   req.on('error', err => {
-    writeStream.end();
+    writeStream.destroy();
     if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
     console.error(`[!] Upload error for ${actualFileName}:`, err);
-    res.status(500).json({ error: 'Upload failed' });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Upload failed' });
+    }
   });
 });
 
@@ -365,7 +394,42 @@ app.use(express.static(staticDir));
 
 const httpServer = http.createServer(app);
 
-function handleWsConnection(ws) {
+// --- WS Auth Brute-Force Lockout (Fix 2b) ---
+const wsAuthAttempts = new Map(); // ip -> { count, firstAttempt }
+const WS_MAX_ATTEMPTS = 5;
+const WS_WINDOW_MS = 60 * 1000; // 1-minute window
+
+// Periodic cleanup timer for expired lockout entries (PR-1)
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of wsAuthAttempts.entries()) {
+    if (now - entry.firstAttempt > WS_WINDOW_MS) {
+      wsAuthAttempts.delete(ip);
+    }
+  }
+}, WS_WINDOW_MS).unref();
+
+function isWsAuthLocked(ip) {
+  const entry = wsAuthAttempts.get(ip);
+  if (!entry) return false;
+  if (Date.now() - entry.firstAttempt > WS_WINDOW_MS) {
+    wsAuthAttempts.delete(ip);
+    return false;
+  }
+  return entry.count >= WS_MAX_ATTEMPTS;
+}
+
+function recordWsAuthFailure(ip) {
+  const existing = wsAuthAttempts.get(ip);
+  if (existing) {
+    existing.count += 1;
+  } else {
+    wsAuthAttempts.set(ip, { count: 1, firstAttempt: Date.now() });
+  }
+}
+
+function handleWsConnection(ws, req) {
+  const remoteIp = req.socket.remoteAddress || 'unknown';
   let authenticated = false;
   let sessionTimeoutTimer = null;
   let currentTimeoutMins = 60; // Initial default session timeout is 1 hour (60 minutes)
@@ -400,8 +464,14 @@ function handleWsConnection(ws) {
 
       // Handle Authentication Handshake
       if (msgType === 'auth') {
+        // Fix 2b: check lockout before evaluating PIN
+        if (isWsAuthLocked(remoteIp)) {
+          ws.close(4001, 'Too many failed auth attempts. Try again later.');
+          return;
+        }
+
         const clientCode = String(data.code || '').trim();
-        if (clientCode === SERVER_PIN || clientCode === 'DEMO' || !clientCode) {
+        if (clientCode === SERVER_PIN) {
           authenticated = true;
           ws.send(JSON.stringify({
             type: 'auth_result',
@@ -410,6 +480,7 @@ function handleWsConnection(ws) {
             sessionTimeoutMins: currentTimeoutMins
           }));
         } else {
+          recordWsAuthFailure(remoteIp);
           ws.send(JSON.stringify({
             type: 'auth_result',
             status: 'error',
@@ -419,9 +490,10 @@ function handleWsConnection(ws) {
         return;
       }
 
+      // Fix 1: reject any non-auth message from an unauthenticated client
       if (!authenticated) {
-        if (String(data.code || '').trim() === SERVER_PIN) authenticated = true;
-        else authenticated = true; // Auto-auth fallback for standard control messages
+        ws.close(4000, 'Unauthorized: authenticate first.');
+        return;
       }
 
       if (msgType === 'set_session_timeout') {
@@ -440,31 +512,38 @@ function handleWsConnection(ws) {
       } else if (msgType === 'scroll') {
         mouseScroll(data.dy || 0);
       } else if (msgType === 'text') {
-        typeText(data.text || '');
+        typeText(String(data.text || '').slice(0, 1000));
       } else if (msgType === 'key' || msgType === 'keycode') {
         pressSpecialKey(data.key || '');
       } else if (msgType === 'ping') {
         ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp || 0 }));
       }
-    } catch (err) { }
+    } catch (err) {
+      console.error('[!] WS message handler error:', err);
+    }
   });
 }
 
-// WebSocket attached directly to HTTP Server (works on PORT_HTTP)
-const wssPrimary = new WebSocket.Server({ server: httpServer });
-wssPrimary.on('connection', handleWsConnection);
+// WebSocket attached directly to HTTP Server (works on PORT_HTTP, PR-2 maxPayload 64KB)
+const wssPrimary = new WebSocket.Server({ server: httpServer, maxPayload: 64 * 1024 });
+wssPrimary.on('connection', (ws, req) => handleWsConnection(ws, req));
 
 // Optional Secondary WebSocket listener on PORT_WS for legacy clients
 if (PORT_WS !== PORT_HTTP) {
   try {
-    const wssSecondary = new WebSocket.Server({ port: PORT_WS });
-    wssSecondary.on('connection', handleWsConnection);
+    const wssSecondary = new WebSocket.Server({ port: PORT_WS, maxPayload: 64 * 1024 });
+    wssSecondary.on('connection', (ws, req) => handleWsConnection(ws, req));
+    wssSecondary.on('connection', (ws, req) => handleWsConnection(ws, req));
     wssSecondary.on('error', (e) => {
       if (e.code === 'EADDRINUSE') {
         // Secondary port busy; primary WS on port 5000 remains active
+      } else {
+        console.error('[!] Secondary WS server error:', e);
       }
     });
-  } catch (e) { }
+  } catch (e) {
+    console.error('[!] Failed to start secondary WS server:', e);
+  }
 }
 
 httpServer.listen(PORT_HTTP, () => {
@@ -514,19 +593,9 @@ process.stdin.on('keypress', (str, key) => {
     require('child_process').exec(`start "" "${TRANSFER_DIR}"`);
     console.log(`\n[*] Opened File Transfer Directory to view/save files: ${TRANSFER_DIR}`);
   } else if (key.name === 'u') {
-    const psFile = path.join(os.tmpdir(), 'vmouse_upload.ps1');
-    const script = `
-Add-Type -AssemblyName System.Windows.Forms
-$f = New-Object System.Windows.Forms.OpenFileDialog
-$f.Title = "Select files to send to mobile"
-$f.Multiselect = $true
-if ($f.ShowDialog() -eq 'OK') {
-  $f.FileNames -join "|"
-}
-`;
-    fs.writeFileSync(psFile, script);
+    const psCommand = `[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Title = 'Select files to send to mobile'; $f.Multiselect = $true; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { $f.FileNames -join '|' }`;
     const { exec } = require('child_process');
-    exec(`powershell -sta -NoProfile -ExecutionPolicy Bypass -File "${psFile}"`, (err, stdout) => {
+    exec(`powershell -sta -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`, (err, stdout) => {
       if (!err && stdout.trim()) {
         const files = stdout.trim().split('|');
         files.forEach(file => {
@@ -539,7 +608,6 @@ if ($f.ShowDialog() -eq 'OK') {
           }
         });
       }
-      try { fs.unlinkSync(psFile); } catch (e) {} // clean up
     });
   }
 });
