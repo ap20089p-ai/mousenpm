@@ -1,6 +1,6 @@
 {
   "name": "mouse-vm",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Transform your smartphone or tablet into a high-performance wireless trackpad, live keyboard, and desktop controller for Windows PC over WiFi.",
   "main": "server.js",
   "files": [
