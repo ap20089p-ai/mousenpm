@@ -257,7 +257,7 @@ function getSafeFilePath(filename) {
   let baseName = sanitizeFilename(filename);
   const ext = path.extname(baseName);
   const nameOnly = path.basename(baseName, ext);
-  
+
   let targetPath = path.join(TRANSFER_DIR, baseName);
   let counter = 1;
   while (fs.existsSync(targetPath)) {
@@ -270,8 +270,10 @@ function getSafeFilePath(filename) {
 // PIN Auth Middleware for APIs
 app.use('/api', (req, res, next) => {
   if (req.method === 'OPTIONS') return next();
+  const remoteIp = req.socket.remoteAddress || req.ip || '';
+  const isLocalhost = remoteIp === '127.0.0.1' || remoteIp === '::1' || remoteIp === '::ffff:127.0.0.1' || remoteIp.endsWith('127.0.0.1');
   const providedPin = req.headers['x-pin'] || req.query.pin;
-  if (providedPin !== SERVER_PIN) {
+  if (!isLocalhost && providedPin !== SERVER_PIN) {
     return res.status(401).json({ error: 'Unauthorized: Invalid PIN' });
   }
   next();
@@ -315,7 +317,7 @@ app.delete('/api/files/:filename', (req, res) => {
       fs.unlinkSync(targetPath);
       console.log(`[-] File deleted by client: ${safeName}`);
       res.json({ success: true });
-    } catch(e) {
+    } catch (e) {
       res.status(500).json({ error: 'Could not delete file' });
     }
   } else {
@@ -486,8 +488,9 @@ httpServer.listen(PORT_HTTP, () => {
     if (!err && qrStr) {
       console.log(qrStr);
       console.log('================================================================');
-      console.log('  - Press U for the uploading');
-      console.log('  - Press O for the save');
+      console.log('  - Press Ctrl+U (or Alt+U / Cmd+U) for file selection dialog');
+      console.log('  - Press Ctrl+V (or Alt+V / Cmd+V) to paste copied file/text');
+      console.log('  - Press Ctrl+S (or Alt+S / Cmd+S) to open save folder');
       console.log('================================================================');
     }
   });
@@ -500,6 +503,57 @@ httpServer.on('error', (e) => {
   }
 });
 
+function processClipboardPaste() {
+  const psScript = `$f = Get-Clipboard -Format FileDropList
+if ($f) {
+  Write-Output ("FILES:" + ($f -join "|"))
+} else {
+  $t = Get-Clipboard -Format Text
+  if ($t) { Write-Output ("TEXT:" + $t) }
+}`;
+  const b64 = Buffer.from(psScript, 'utf16le').toString('base64');
+  const { exec } = require('child_process');
+  exec(`powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${b64}`, (err, stdout) => {
+    if (err || !stdout) {
+      console.log('\n[!] Clipboard is empty or could not be read.');
+      return;
+    }
+    const output = stdout.trim();
+    if (output.startsWith('FILES:')) {
+      const filesStr = output.replace(/^FILES:/, '').trim();
+      if (!filesStr) return;
+      const files = filesStr.split('|');
+      let count = 0;
+      files.forEach(file => {
+        if (fs.existsSync(file)) {
+          const fileName = path.basename(file);
+          const targetPath = getSafeFilePath(fileName);
+          fs.copyFileSync(file, targetPath);
+          console.log(`\n[+] Saved file from Clipboard (Ctrl+V) to Transfer section: ${path.basename(targetPath)}`);
+          console.log(`    -> Tap 'Refresh List' on your phone to download it!`);
+          count++;
+        }
+      });
+      if (count === 0) {
+        console.log('\n[!] No valid files found in Clipboard.');
+      }
+    } else if (output.startsWith('TEXT:')) {
+      const text = output.replace(/^TEXT:/, '');
+      if (!text || !text.trim()) {
+        console.log('\n[!] Clipboard text is empty.');
+        return;
+      }
+      const timeStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const targetPath = getSafeFilePath(`pasted_text_${timeStr}.txt`);
+      fs.writeFileSync(targetPath, text, 'utf8');
+      console.log(`\n[+] Saved text from Clipboard (Ctrl+V) to Transfer section: ${path.basename(targetPath)}`);
+      console.log(`    -> Tap 'Refresh List' on your phone to download it!`);
+    } else {
+      console.log('\n[!] Clipboard is empty or unsupported format.');
+    }
+  });
+}
+
 // --- Terminal Controls ---
 const readline = require('readline');
 readline.emitKeypressEvents(process.stdin);
@@ -508,12 +562,15 @@ if (process.stdin.isTTY) {
 }
 
 process.stdin.on('keypress', (str, key) => {
+  if (!key) return;
   if ((key.ctrl && key.name === 'c') || key.name === 'q') {
     process.exit();
-  } else if (key.name === 'o' || key.name === 's') {
+  } else if ((key.ctrl || key.meta) && key.name === 's') {
     require('child_process').exec(`start "" "${TRANSFER_DIR}"`);
     console.log(`\n[*] Opened File Transfer Directory to view/save files: ${TRANSFER_DIR}`);
-  } else if (key.name === 'u') {
+  } else if ((key.ctrl || key.meta) && key.name === 'v') {
+    processClipboardPaste();
+  } else if ((key.ctrl || key.meta) && key.name === 'u') {
     const psFile = path.join(os.tmpdir(), 'vmouse_upload.ps1');
     const script = `
 Add-Type -AssemblyName System.Windows.Forms
@@ -539,7 +596,7 @@ if ($f.ShowDialog() -eq 'OK') {
           }
         });
       }
-      try { fs.unlinkSync(psFile); } catch (e) {} // clean up
+      try { fs.unlinkSync(psFile); } catch (e) { } // clean up
     });
   }
 });

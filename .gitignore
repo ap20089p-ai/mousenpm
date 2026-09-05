@@ -22,3 +22,14 @@ Thumbs.db
 # Node.js
 node_modules/
 npm-debug.log*
+
+# File Transfers & Archives
+transfers/
+packages/vm/transfers/
+*.tgz
+*.zip
+
+# Agent & Environment
+.env
+.gemini/
+

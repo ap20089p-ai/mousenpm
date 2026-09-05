@@ -20,6 +20,36 @@ for (const arg of process.argv) {
   if (arg === '--version' || arg === '-v') {
     console.log(`v${pkg.version}`);
     process.exit(0);
+  } else if (arg === '--help' || arg === '-h') {
+    console.log(`
+@abhi2007/vm2do v${pkg.version} — Wireless Mouse & Keyboard Server for Windows
+
+Usage:
+  vm2do [options]
+
+Options:
+  --port=<n>           HTTP port (default: 5000). WS port = port + 1
+  --pin=<xxxx>         Set a fixed 4-digit PIN (default: random)
+  --transfer-path=<p>  Directory for file transfers (default: ./transfers)
+  --version, -v        Print version and exit
+  --help, -h           Show this help message
+
+Keyboard Shortcuts (in server terminal):
+  Ctrl+S               Open file transfer folder in Explorer
+  Ctrl+U               Open file picker to send files to mobile
+  Ctrl+V               Paste clipboard file or text into transfers
+  Ctrl+C  or  q        Stop the server
+
+Examples:
+  vm2do
+  vm2do --port=8080
+  vm2do --pin=1234 --port=3000
+  vm2do --transfer-path=C:\\Users\\me\\Desktop\\files
+
+Install:
+  npm install -g mouse-vm
+`);
+    process.exit(0);
   } else if (arg.startsWith('--pin=')) {
     SERVER_PIN = arg.split('=')[1].trim();
   } else if (arg.startsWith('--port=')) {
@@ -286,8 +316,10 @@ const pinLimiter = rateLimit({
 // PIN Auth Middleware for APIs
 app.use('/api', pinLimiter, (req, res, next) => {
   if (req.method === 'OPTIONS') return next();
+  const remoteIp = req.socket.remoteAddress || req.ip || '';
+  const isLocalhost = remoteIp === '127.0.0.1' || remoteIp === '::1' || remoteIp === '::ffff:127.0.0.1' || remoteIp.endsWith('127.0.0.1');
   const providedPin = req.headers['x-pin'] || req.query.pin;
-  if (providedPin !== SERVER_PIN) {
+  if (!isLocalhost && providedPin !== SERVER_PIN) {
     return res.status(401).json({ error: 'Unauthorized: Invalid PIN' });
   }
   next();
@@ -374,9 +406,9 @@ app.post('/api/upload', (req, res) => {
   req.on('end', () => {
     if (res.headersSent) return; // already responded (e.g. 413 path)
     writeStream.end();
-    const downloadLink = `http://localhost:${PORT_HTTP}/api/files/${encodeURIComponent(actualFileName)}`;
+    const downloadLink = `http://localhost:${PORT_HTTP}/api/files/${encodeURIComponent(actualFileName)}?pin=${SERVER_PIN}`;
     console.log(`[+] File uploaded from client: ${actualFileName} (${(uploadedBytes / 1024 / 1024).toFixed(2)} MB)`);
-    console.log(`    -> Download/View on PC: ${downloadLink} (PIN required)`);
+    console.log(`    -> Download/View on PC: ${downloadLink}`);
     res.json({ success: true, filename: actualFileName });
   });
 
@@ -533,7 +565,6 @@ if (PORT_WS !== PORT_HTTP) {
   try {
     const wssSecondary = new WebSocket.Server({ port: PORT_WS, maxPayload: 64 * 1024 });
     wssSecondary.on('connection', (ws, req) => handleWsConnection(ws, req));
-    wssSecondary.on('connection', (ws, req) => handleWsConnection(ws, req));
     wssSecondary.on('error', (e) => {
       if (e.code === 'EADDRINUSE') {
         // Secondary port busy; primary WS on port 5000 remains active
@@ -565,8 +596,9 @@ httpServer.listen(PORT_HTTP, () => {
     if (!err && qrStr) {
       console.log(qrStr);
       console.log('================================================================');
-      console.log('  - Press U for the uploading');
-      console.log('  - Press O for the save');
+      console.log('  - Press Ctrl+U (or Alt+U / Cmd+U) for file selection dialog');
+      console.log('  - Press Ctrl+V (or Alt+V / Cmd+V) to paste copied file/text');
+      console.log('  - Press Ctrl+S (or Alt+S / Cmd+S) to open save folder');
       console.log('================================================================');
     }
   });
@@ -579,6 +611,57 @@ httpServer.on('error', (e) => {
   }
 });
 
+function processClipboardPaste() {
+  const psScript = `$f = Get-Clipboard -Format FileDropList
+if ($f) {
+  Write-Output ("FILES:" + ($f -join "|"))
+} else {
+  $t = Get-Clipboard -Format Text
+  if ($t) { Write-Output ("TEXT:" + $t) }
+}`;
+  const b64 = Buffer.from(psScript, 'utf16le').toString('base64');
+  const { exec } = require('child_process');
+  exec(`powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${b64}`, (err, stdout) => {
+    if (err || !stdout) {
+      console.log('\n[!] Clipboard is empty or could not be read.');
+      return;
+    }
+    const output = stdout.trim();
+    if (output.startsWith('FILES:')) {
+      const filesStr = output.replace(/^FILES:/, '').trim();
+      if (!filesStr) return;
+      const files = filesStr.split('|');
+      let count = 0;
+      files.forEach(file => {
+        if (fs.existsSync(file)) {
+          const fileName = path.basename(file);
+          const targetPath = getSafeFilePath(fileName);
+          fs.copyFileSync(file, targetPath);
+          console.log(`\n[+] Saved file from Clipboard (Ctrl+V) to Transfer section: ${path.basename(targetPath)}`);
+          console.log(`    -> Tap 'Refresh List' on your phone to download it!`);
+          count++;
+        }
+      });
+      if (count === 0) {
+        console.log('\n[!] No valid files found in Clipboard.');
+      }
+    } else if (output.startsWith('TEXT:')) {
+      const text = output.replace(/^TEXT:/, '');
+      if (!text || !text.trim()) {
+        console.log('\n[!] Clipboard text is empty.');
+        return;
+      }
+      const timeStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const targetPath = getSafeFilePath(`pasted_text_${timeStr}.txt`);
+      fs.writeFileSync(targetPath, text, 'utf8');
+      console.log(`\n[+] Saved text from Clipboard (Ctrl+V) to Transfer section: ${path.basename(targetPath)}`);
+      console.log(`    -> Tap 'Refresh List' on your phone to download it!`);
+    } else {
+      console.log('\n[!] Clipboard is empty or unsupported format.');
+    }
+  });
+}
+
 // --- Terminal Controls ---
 const readline = require('readline');
 readline.emitKeypressEvents(process.stdin);
@@ -587,12 +670,15 @@ if (process.stdin.isTTY) {
 }
 
 process.stdin.on('keypress', (str, key) => {
+  if (!key) return;
   if ((key.ctrl && key.name === 'c') || key.name === 'q') {
     process.exit();
-  } else if (key.name === 'o' || key.name === 's') {
+  } else if ((key.ctrl || key.meta) && key.name === 's') {
     require('child_process').exec(`start "" "${TRANSFER_DIR}"`);
     console.log(`\n[*] Opened File Transfer Directory to view/save files: ${TRANSFER_DIR}`);
-  } else if (key.name === 'u') {
+  } else if ((key.ctrl || key.meta) && key.name === 'v') {
+    processClipboardPaste();
+  } else if ((key.ctrl || key.meta) && key.name === 'u') {
     const psCommand = `[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Title = 'Select files to send to mobile'; $f.Multiselect = $true; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { $f.FileNames -join '|' }`;
     const { exec } = require('child_process');
     exec(`powershell -sta -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`, (err, stdout) => {
@@ -612,4 +698,19 @@ process.stdin.on('keypress', (str, key) => {
   }
 });
 
+// --- Graceful Shutdown (SIGTERM for PM2 / Docker / npm stop) ---
+function gracefulShutdown(signal) {
+  console.log(`\n[*] Received ${signal}. Shutting down gracefully...`);
+  if (process.stdin.isTTY) {
+    try { process.stdin.setRawMode(false); } catch (e) { }
+  }
+  httpServer.close(() => {
+    console.log('[*] HTTP server closed. Goodbye!');
+    process.exit(0);
+  });
+  // Force exit after 3 seconds if httpServer.close() hangs
+  setTimeout(() => process.exit(0), 3000).unref();
+}
 
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT',  () => gracefulShutdown('SIGINT'));

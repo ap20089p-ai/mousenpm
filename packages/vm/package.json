@@ -1,16 +1,23 @@
 {
-  "name": "virtual-mouse-app",
+  "name": "mouse-vm",
   "version": "1.0.2",
   "description": "Transform your smartphone or tablet into a high-performance wireless trackpad, live keyboard, and desktop controller for Windows PC over WiFi.",
   "main": "server.js",
+  "files": [
+    "bin",
+    "server.js",
+    "static"
+  ],
   "bin": {
+    "vm2do": "bin/cli.js",
     "vm": "bin/cli.js",
-    "virtual-mouse": "bin/cli.js",
-    "virtual-mouse-app": "bin/cli.js"
+    "virtual-mouse": "bin/cli.js"
   },
+
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "postversion": "node -e \"const fs=require('fs'),v=require('./package.json').version,f='static/sw.js',s=fs.readFileSync(f,'utf8').replace(/const CACHE_NAME = \\\"mouse-vm-v[^\\\"]+\\\"/,'const CACHE_NAME = \\\"mouse-vm-v'+v+'\\\"');fs.writeFileSync(f,s);console.log('[postversion] sw.js CACHE_NAME updated to mouse-vm-v'+v);\""
   },
   "keywords": [
     "virtual-mouse",
@@ -21,21 +28,21 @@
     "remote-mouse",
     "wifi-mouse"
   ],
-  "author": "",
+  "author": "abhi2007",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.21.2",
-    "express-rate-limit": "^7.5.0",
-    "koffi": "^2.9.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "koffi": "^3.2.1",
     "qrcode": "^1.5.4",
-    "ws": "^8.18.0"
-  },
-  "overrides": {
-    "body-parser": "^1.20.3",
-    "send": "^0.19.0",
-    "ws": "^8.18.0"
+    "ws": "^8.21.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0 || >=22.0.0 || >=24.0.0"
+  },
+  "homepage": "https://github.com/ap20089p-ai/mousenpm#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ap20089p-ai/mousenpm.git"
   }
 }

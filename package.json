@@ -6,6 +6,9 @@
     "packages/*"
   ],
   "scripts": {
-    "start": "npm start --workspace=virtual-mouse-app"
+    "start": "npm start --workspace=vm2do"
+  },
+  "engines": {
+    "node": ">=20.0.0 || >=22.0.0 || >=24.0.0"
   }
 }
