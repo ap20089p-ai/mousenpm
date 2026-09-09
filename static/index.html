@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="VirtualMouse">
-    <link rel="manifest" href="manifest.json?v=2.5">
+    <link rel="manifest" href="manifest.json?v=2.9">
     <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
 
@@ -19,7 +19,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=2.5">
+    <link rel="stylesheet" href="style.css?v=2.9">
 </head>
 <body class="dark-theme">
     <!-- Main Application Container -->
@@ -135,6 +135,21 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Always Connect & Reconnect Toggle Option -->
+                    <div class="always-reconnect-card">
+                        <div class="always-reconnect-info">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="always-icon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                            <div>
+                                <span class="always-reconnect-title">Always connect & reconnect</span>
+                                <span class="always-reconnect-sub">Auto-connect & retry infinitely without asking</span>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="chk-always-reconnect" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
 
                     <!-- Connection Status -->
@@ -291,121 +306,160 @@
                             <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line><line x1="14" y1="8" x2="14.01" y2="8"></line><line x1="18" y1="8" x2="18.01" y2="8"></line><line x1="6" y1="12" x2="6.01" y2="12"></line><line x1="10" y1="12" x2="10.01" y2="12"></line><line x1="14" y1="12" x2="14.01" y2="12"></line><line x1="18" y1="12" x2="18.01" y2="12"></line><line x1="7" y1="16" x2="17" y2="16"></line></svg>
                         </div>
                         <div class="aux-card-info">
-                            <span class="card-title">Live Keyboard & TextPad</span>
-                            <span class="card-subtitle">Open typing & keycodes tool →</span>
+                            <span class="card-title">Live Auto-Type Keyboard</span>
+                            <span class="card-subtitle">Open typing, arrows & shortcuts →</span>
                         </div>
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- ================= 4. Dedicated Keyboard & TextPad Screen ================= -->
+        <!-- ================= 4. Dedicated Keyboard & Live Auto-Type Screen ================= -->
         <section id="screen-keyboard" class="screen">
 
             <div class="scroll-content kb-content-area">
                 
-                <!-- Unified Keyboard Tool Card (Live & TextPad) -->
-                <div class="kb-tool-card unified-keyboard-card live-card-highlight">
-                    <div class="keyboard-mode-toggle">
-                        <button class="mode-toggle-btn active" id="btn-mode-live">Live Auto-Type</button>
-                        <button class="mode-toggle-btn" id="btn-mode-textpad">Desktop TextPad</button>
+                <!-- 1. Compact Live Auto-Type & Direct Media Transfer Card -->
+                <div class="kb-tool-card compact-live-card">
+                    <div class="compact-live-header">
+                        <div class="kb-title-with-badge">
+                            <span class="tool-dot live-dot"></span>
+                            <h4>Live Auto-Type</h4>
+                        </div>
+                        <span class="live-status-pill" id="pill-live-transmitting">Live Stream ⚡</span>
                     </div>
 
-                    <!-- Live Auto-Typing View -->
-                    <div id="view-mode-live" class="keyboard-view active">
-                        <div class="kb-card-header" style="margin-top:12px;">
-                            <div class="kb-title-with-badge">
-                                <span class="tool-dot live-dot"></span>
-                                <h4>Live Auto-Typing</h4>
-                            </div>
-                            <span class="live-status-pill" id="pill-live-transmitting">Live Stream ⚡</span>
+                    <!-- Live Typing Stream Input Box -->
+                    <div class="compact-input-row">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="live-input-icon"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+                        <input type="text" id="kb-live-input" placeholder="Type here to stream live to PC..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <button class="compact-clear-btn" id="btn-live-clear" title="Clear text" type="button">✕</button>
+                    </div>
+
+                    <!-- Direct Media Transfer Toolbar: Browse, Show, Direct Transfer (No Paths!) -->
+                    <div class="compact-transfer-toolbar">
+                        <div class="transfer-btn-group">
+                            <button class="transfer-action-btn btn-browse-img" id="btn-browse-image" type="button" title="Browse and pick original image">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                <span>Browse Image</span>
+                            </button>
+                            <button class="transfer-action-btn btn-browse-file" id="btn-browse-file" type="button" title="Browse and pick file or PDF">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                <span>Browse File</span>
+                            </button>
+                            <button class="transfer-action-btn btn-show-preview" id="btn-show-preview" type="button" title="Show original image preview" disabled>
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <span>Show</span>
+                            </button>
                         </div>
-                        
-                        <div class="live-input-box-wrapper">
-                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="live-input-icon"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
-                            <input type="text" id="kb-live-input" placeholder="Type here to stream directly to PC..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                            <button class="kb-quick-action-btn kb-enter-pill" id="btn-live-enter" title="Send Enter">↵ Enter</button>
-                            <button class="kb-quick-action-btn kb-backspace-pill" id="btn-live-backspace" title="Backspace">⌫ Del</button>
+                        <input type="file" id="compact-image-picker" accept="image/*" style="display:none;">
+                        <input type="file" id="compact-file-picker" style="display:none;">
+                    </div>
+
+                    <!-- Compact Staged Attachment Strip (Appears when image/file is picked) -->
+                    <div id="compact-staged-strip" class="compact-staged-strip" style="display:none;">
+                        <div class="staged-info-left" id="btn-trigger-show-preview">
+                            <div class="staged-thumb-wrapper" id="staged-thumb-box"></div>
+                            <div class="staged-meta">
+                                <span class="staged-name" id="staged-file-name">image.png</span>
+                                <span class="staged-size" id="staged-file-size">1.2 MB</span>
+                            </div>
+                        </div>
+                        <div class="staged-actions-right">
+                            <button class="btn-transfer-direct" id="btn-transfer-direct-now" type="button" title="Directly transfer original to PC">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                <span>Transfer PC ⚡</span>
+                            </button>
+                            <button class="staged-cancel-btn" id="btn-cancel-staged" type="button" title="Remove">✕</button>
                         </div>
                     </div>
 
-                    <!-- Desktop TextPad View -->
-                    <div id="view-mode-textpad" class="keyboard-view" style="display: none;">
-                        <div class="kb-card-header" style="margin-top:12px;">
-                            <div class="kb-title-with-badge">
-                                <span class="tool-dot pad-dot"></span>
-                                <h4>Desktop TextPad</h4>
-                            </div>
-                            <button class="textpad-clear-link" id="btn-textpad-clear">Clear Pad</button>
+                    <!-- Transfer Progress Indicator -->
+                    <div id="compact-upload-progress" class="compact-upload-progress" style="display:none;">
+                        <div class="compact-progress-track">
+                            <div class="compact-progress-bar" id="compact-upload-bar"></div>
                         </div>
-                        
-                        <div class="textpad-wrapper">
-                            <textarea id="kb-textpad-input" rows="3" placeholder="Write full text, URLs, notes, or code here..."></textarea>
-                        </div>
+                        <span class="compact-progress-text" id="compact-upload-text">Directly transferring original image to PC...</span>
+                    </div>
 
-                        <button class="primary-btn send-textpad-btn" id="btn-send-textpad">
-                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                            <span>Send to Desktop TextPad</span>
+                    <!-- Success / Confirmation Notice (NO paths displayed!) -->
+                    <div id="compact-transfer-status" class="compact-transfer-status" style="display:none;"></div>
+                </div>
+
+                <!-- 2. Navigation Arrow Keys & Enter Key (Row 1: Arrow Keys, Row 2: Enter Key just below) -->
+                <div class="kb-tool-card nav-enter-card">
+                    <!-- Row 1: Dedicated Arrow Keys (Left, Up, Down, Right with Hold-to-Move) -->
+                    <div class="nav-arrows-section">
+                        <div class="nav-arrows-header">
+                            <span class="nav-arrows-title">Arrow Keys</span>
+                            <span class="nav-arrows-hint">(Hold to move cursor continuous)</span>
+                        </div>
+                        <div class="arrows-row-grid">
+                            <button class="keycode-btn arrow-btn hold-repeat-btn" data-key="left" title="Left Arrow (Hold to move cursor left)">
+                                <span class="arrow-glyph">◄</span>
+                                <span class="arrow-text">Left</span>
+                            </button>
+                            <button class="keycode-btn arrow-btn hold-repeat-btn" data-key="up" title="Up Arrow (Hold to move cursor up)">
+                                <span class="arrow-glyph">▲</span>
+                                <span class="arrow-text">Up</span>
+                            </button>
+                            <button class="keycode-btn arrow-btn hold-repeat-btn" data-key="down" title="Down Arrow (Hold to move cursor down)">
+                                <span class="arrow-glyph">▼</span>
+                                <span class="arrow-text">Down</span>
+                            </button>
+                            <button class="keycode-btn arrow-btn hold-repeat-btn" data-key="right" title="Right Arrow (Hold to move cursor right)">
+                                <span class="arrow-glyph">►</span>
+                                <span class="arrow-text">Right</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Dedicated Enter Key (Shown just below the arrow keys) -->
+                    <div class="nav-enter-section">
+                        <button class="keycode-btn prominent-enter-btn" data-key="enter" id="btn-prominent-enter" title="Primary Action Enter Key">
+                            <div class="prominent-enter-inner">
+                                <span class="prominent-enter-icon">↵</span>
+                                <div class="prominent-enter-text-group">
+                                    <span class="prominent-enter-title">Enter Key</span>
+                                    <span class="prominent-enter-sub">Primary Action</span>
+                                </div>
+                            </div>
                         </button>
                     </div>
                 </div>
 
-                <!-- Tool 3: Virtual Keypad & Modifier Controls -->
+                <!-- 3. Primary Actions & PC Shortcuts (Shown after Enter and Arrow Keys) -->
                 <div class="kb-tool-card keypad-card">
                     <div class="kb-card-header">
                         <div class="kb-title-with-badge">
                             <span class="tool-dot key-dot"></span>
-                            <h4>Keycodes & Modifiers</h4>
+                            <h4>Primary Actions & PC Shortcuts</h4>
                         </div>
                         <span class="keypad-helper-badge">Touch Enabled</span>
                     </div>
 
-                    <button class="options-accordion-btn kb-accordion-btn is-expanded" id="btn-toggle-primary-actions" type="button" style="margin-top: 15px;">
-                        <div class="acc-btn-left">
-                            <span>Primary Actions & PC Shortcuts</span>
-                        </div>
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron-icon"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-                    <div class="options-accordion-content is-expanded" id="content-primary-actions">
-                        <div class="keycode-grid grid-4">
-                            <button class="keycode-btn action-key esc-btn" data-key="esc">Esc</button>
-                            <button class="keycode-btn action-key tab-btn-key" data-key="tab">Tab ⇥</button>
-                            <button class="keycode-btn action-key shift-btn" data-key="shift">Shift ⇧</button>
-                            <button class="keycode-btn action-key alt-btn" data-key="alt">Alt ⎇</button>
-                            
-                            <button class="keycode-btn action-key win-btn" data-key="win">Win ⊞</button>
-                            <button class="keycode-btn action-key fn-btn" data-key="fn">Fn ⚡</button>
-                            <button class="keycode-btn action-key space-btn" data-key="space">Space ␣</button>
-                            <button class="keycode-btn action-key snip-btn" data-key="win+shift+s">Win+Shift+S ✂</button>
-                            
-                            <button class="keycode-btn shortcut-key" data-key="ctrl+a">Ctrl+A</button>
-                            <button class="keycode-btn shortcut-key" data-key="ctrl+c">Ctrl+C</button>
-                            <button class="keycode-btn shortcut-key" data-key="ctrl+v">Ctrl+V</button>
-                            <button class="keycode-btn shortcut-key" data-key="ctrl+z">Ctrl+Z</button>
-                            
-                            <button class="keycode-btn shortcut-key alt-shortcut" data-key="alt+tab">Alt+Tab ⇥</button>
-                            <button class="keycode-btn shortcut-key alt-shortcut" data-key="alt+f4">Alt+F4 ✖</button>
-                            <button class="keycode-btn shortcut-key" data-key="ctrl+s">Ctrl+S 💾</button>
-                            <button class="keycode-btn shortcut-key" data-key="ctrl+y">Ctrl+Y ↷</button>
+                    <div class="keycode-grid grid-4" style="margin-top: 14px;">
+                        <button class="keycode-btn action-key esc-btn" data-key="esc">Esc</button>
+                        <button class="keycode-btn action-key tab-btn-key" data-key="tab">Tab ⇥</button>
+                        <button class="keycode-btn action-key shift-btn" data-key="shift">Shift ⇧</button>
+                        <button class="keycode-btn action-key alt-btn" data-key="alt">Alt ⎇</button>
+                        
+                        <button class="keycode-btn action-key win-btn" data-key="win">Win ⊞</button>
+                        <button class="keycode-btn action-key fn-btn" data-key="fn">Fn ⚡</button>
+                        <button class="keycode-btn action-key space-btn" data-key="space">Space ␣</button>
+                        <button class="keycode-btn action-key snip-btn" data-key="win+shift+s">Win+Shift+S ✂</button>
+                        
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+a">Ctrl+A</button>
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+c">Ctrl+C</button>
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+v">Ctrl+V</button>
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+z">Ctrl+Z</button>
+                        
+                        <button class="keycode-btn shortcut-key alt-shortcut" data-key="alt+tab" id="btn-primary-alt-tab" title="1 click swaps apps, 2 clicks swap 3rd, 3 clicks swap 4th screen">Alt+Tab ⇥</button>
+                        <button class="keycode-btn shortcut-key alt-shortcut" data-key="alt+f4">Alt+F4 ✖</button>
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+s">Ctrl+S 💾</button>
+                        <button class="keycode-btn shortcut-key" data-key="ctrl+y">Ctrl+Y ↷</button>
 
-                            <button class="keycode-btn action-key enter-btn enter-btn-full" data-key="enter" style="grid-column: span 4;">↵ Enter Key</button>
-                        </div>
-                    </div>
-
-
-
-                    <!-- Row 3: Navigation & Arrow D-Pad -->
-                    <div class="keypad-section-label">Navigation & Arrow Keys</div>
-                    <div class="nav-arrows-container">
-                        <!-- Nav Side Buttons Removed -->
-                        <div class="dpad-container">
-                            <button class="keycode-btn arrow-btn dpad-up" data-key="up" title="Up Arrow">▲</button>
-                            <div class="dpad-horizontal">
-                                <button class="keycode-btn arrow-btn dpad-left" data-key="left" title="Left Arrow">◄</button>
-                                <button class="keycode-btn arrow-btn dpad-down" data-key="down" title="Down Arrow">▼</button>
-                                <button class="keycode-btn arrow-btn dpad-right" data-key="right" title="Right Arrow">►</button>
-                            </div>
-                        </div>
+                        <button class="keycode-btn action-key hold-repeat-btn backspace-full-btn" data-key="backspace" style="grid-column: span 4;" title="Hold to continuously delete">⌫ Backspace (Hold to delete)</button>
                     </div>
                 </div>
 
@@ -441,19 +495,31 @@
 
                     <div class="setting-row">
                         <div class="setting-label-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                            <div>
+                                <p class="sett-title">Always Connect & Reconnect</p>
+                                <p class="sett-desc">Auto-connect and retry infinitely without asking again</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-always-reconnect" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-label-icon">
                             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" class="sett-icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                             <div>
                                 <p class="sett-title">Connection Session Timeout</p>
-                                <p class="sett-desc">Auto disconnect connection after session timeout</p>
+                                <p class="sett-desc">Set to Infinite to never disconnect automatically</p>
                             </div>
                         </div>
                         <select class="custom-select" id="select-session-timeout">
-                            <option value="60" selected>1 Hour (Default)</option>
-                            <option value="15">15 Minutes</option>
-                            <option value="30">30 Minutes</option>
+                            <option value="0" selected>Infinite / Never (Default)</option>
+                            <option value="60">1 Hour</option>
                             <option value="120">2 Hours</option>
                             <option value="240">4 Hours</option>
-                            <option value="0">Never (Unlimited)</option>
                         </select>
                     </div>
 
@@ -700,6 +766,78 @@
             </div>
         </section>
 
+        <!-- ================= Art Transfer Studio Modal ================= -->
+        <div class="modal-backdrop" id="modal-art-transfer" style="display:none;">
+            <div class="art-modal-card">
+                <div class="art-modal-header">
+                    <div class="art-modal-title">
+                        <div class="art-badge-icon">🎨</div>
+                        <div>
+                            <h3>Art Studio Transfer</h3>
+                            <p>Draw, sketch, or sign & transfer directly to PC</p>
+                        </div>
+                    </div>
+                    <button class="modal-close-btn" id="btn-close-art-modal" type="button">✕</button>
+                </div>
+
+                <div class="art-canvas-container">
+                    <canvas id="art-canvas" width="600" height="380"></canvas>
+                </div>
+
+                <!-- Art Controls & Color Palette -->
+                <div class="art-controls-bar">
+                    <div class="art-color-palette">
+                        <button class="color-swatch active" data-color="#00f0ff" style="background:#00f0ff;" type="button"></button>
+                        <button class="color-swatch" data-color="#ffffff" style="background:#ffffff;" type="button"></button>
+                        <button class="color-swatch" data-color="#ff007f" style="background:#ff007f;" type="button"></button>
+                        <button class="color-swatch" data-color="#ffd700" style="background:#ffd700;" type="button"></button>
+                        <button class="color-swatch" data-color="#00ff88" style="background:#00ff88;" type="button"></button>
+                        <button class="color-swatch" data-color="#ff4444" style="background:#ff4444;" type="button"></button>
+                        <button class="color-swatch eraser-swatch" data-color="#080d16" title="Eraser" type="button">🧹</button>
+                    </div>
+                    <div class="art-brush-sizes">
+                        <button class="brush-size-btn" data-size="2" type="button"><span style="width:4px;height:4px;"></span></button>
+                        <button class="brush-size-btn active" data-size="5" type="button"><span style="width:7px;height:7px;"></span></button>
+                        <button class="brush-size-btn" data-size="12" type="button"><span style="width:12px;height:12px;"></span></button>
+                    </div>
+                </div>
+
+                <div class="art-modal-footer">
+                    <button class="outline-btn sm-btn" id="btn-clear-art-canvas" type="button">Clear Canvas</button>
+                    <button class="primary-btn sm-btn" id="btn-submit-art-transfer" type="button">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        <span>Attach Art to Chat</span>
+                    </button>
+                </div>
+            </div>
+        <!-- ================= Original Image Preview Lightbox Modal ================= -->
+        <div class="modal-backdrop" id="modal-image-preview" style="display:none;">
+            <div class="art-modal-card image-preview-modal-card">
+                <div class="art-modal-header">
+                    <div class="art-modal-title">
+                        <div class="art-badge-icon">🖼️</div>
+                        <div>
+                            <h3 id="preview-modal-title">Original Image Preview</h3>
+                            <p id="preview-modal-sub">Direct high-res transfer to PC</p>
+                        </div>
+                    </div>
+                    <button class="modal-close-btn" id="btn-close-image-modal" type="button">✕</button>
+                </div>
+
+                <div class="image-preview-full-container">
+                    <img id="preview-modal-img" src="" alt="Selected Preview">
+                </div>
+
+                <div class="art-modal-footer">
+                    <button class="outline-btn sm-btn" id="btn-dismiss-image-modal" type="button">Close</button>
+                    <button class="primary-btn sm-btn" id="btn-modal-direct-transfer" type="button">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        <span>Transfer to PC Now ⚡</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- ================= Bottom Navigation Bar (4 Tabs) ================= -->
         <nav class="bottom-navbar" id="main-bottom-nav">
             <button class="nav-item active" data-screen="screen-home">
@@ -712,7 +850,7 @@
             </button>
             <button class="nav-item" data-screen="screen-keyboard">
                 <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line><line x1="14" y1="8" x2="14.01" y2="8"></line><line x1="18" y1="8" x2="18.01" y2="8"></line><line x1="6" y1="12" x2="6.01" y2="12"></line><line x1="10" y1="12" x2="10.01" y2="12"></line><line x1="14" y1="12" x2="14.01" y2="12"></line><line x1="18" y1="12" x2="18.01" y2="12"></line><line x1="7" y1="16" x2="17" y2="16"></line></svg>
-                <span>Keyboard</span>
+                <span>Chat & Keys</span>
             </button>
             <button class="nav-item" data-screen="screen-settings">
                 <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -733,6 +871,6 @@
     </div>
 
     <!-- Application Script with Cache Buster -->
-    <script src="app.js?v=2.5"></script>
+    <script src="app.js?v=2.9"></script>
 </body>
 </html>

@@ -77,8 +77,9 @@ const MOUSEEVENTF_MIDDLEUP = 0x0040;
 const MOUSEEVENTF_WHEEL = 0x0800;
 
 // Keyboard Event Flags
-const KEYEVENTF_UNICODE = 0x0004;
+const KEYEVENTF_EXTENDEDKEY = 0x0001;
 const KEYEVENTF_KEYUP = 0x0002;
+const KEYEVENTF_UNICODE = 0x0004;
 
 // Virtual Key Codes (Windows VK)
 const VK_BACK = 0x08;
@@ -100,7 +101,7 @@ const VK_F5 = 0x74;    // F5 Key (Refresh/Fn)
 
 // --- Windows user32.dll API Bindings via koffi ---
 let user32 = null;
-let GetCursorPos, SetCursorPos, mouse_event, keybd_event;
+let GetCursorPos, SetCursorPos, mouse_event, keybd_event, MapVirtualKeyA;
 
 try {
   user32 = koffi.load('user32.dll');
@@ -116,6 +117,9 @@ try {
   GetCursorPos = user32.func('bool GetCursorPos(_Out_ POINT *pt)');
   mouse_event = user32.func('void mouse_event(uint32_t dwFlags, uint32_t dx, uint32_t dy, uint32_t dwData, uintptr_t dwExtraInfo)');
   keybd_event = user32.func('void keybd_event(uint8_t bVk, uint8_t bScan, uint32_t dwFlags, uintptr_t dwExtraInfo)');
+  try {
+    MapVirtualKeyA = user32.func('uint32_t MapVirtualKeyA(uint32_t uCode, uint32_t uMapType)');
+  } catch (e) { }
 } catch (err) {
   console.warn('[!] Notice: Windows user32.dll bindings unavailable on this OS platform.');
 }
@@ -154,30 +158,51 @@ function mouseScroll(dy) {
   mouse_event(MOUSEEVENTF_WHEEL, 0, 0, wheelUnits, 0);
 }
 
+function isExtendedVK(vkCode) {
+  return vkCode === VK_LEFT || vkCode === VK_UP || vkCode === VK_RIGHT || vkCode === VK_DOWN || vkCode === VK_DELETE || vkCode === VK_LWIN;
+}
+
 function pressVK(vkCode) {
   if (!keybd_event) return;
-  keybd_event(vkCode, 0, 0, 0);
-  keybd_event(vkCode, 0, KEYEVENTF_KEYUP, 0);
+  const isExt = isExtendedVK(vkCode);
+  const scan = MapVirtualKeyA ? (MapVirtualKeyA(vkCode, 0) & 0xFF) : 0;
+  const flagsDown = isExt ? KEYEVENTF_EXTENDEDKEY : 0;
+  const flagsUp = isExt ? (KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY) : KEYEVENTF_KEYUP;
+  keybd_event(vkCode, scan, flagsDown, 0);
+  keybd_event(vkCode, scan, flagsUp, 0);
 }
 
 function pressCombo(modifierVK, keyCharOrVK) {
   if (!keybd_event) return;
   const vk = typeof keyCharOrVK === 'string' ? keyCharOrVK.toUpperCase().charCodeAt(0) : keyCharOrVK;
-  keybd_event(modifierVK, 0, 0, 0);
-  keybd_event(vk, 0, 0, 0);
-  keybd_event(vk, 0, KEYEVENTF_KEYUP, 0);
-  keybd_event(modifierVK, 0, KEYEVENTF_KEYUP, 0);
+  const isExt = isExtendedVK(vk);
+  const scanMod = MapVirtualKeyA ? (MapVirtualKeyA(modifierVK, 0) & 0xFF) : 0;
+  const scanVk = MapVirtualKeyA ? (MapVirtualKeyA(vk, 0) & 0xFF) : 0;
+  const flagsDown = isExt ? KEYEVENTF_EXTENDEDKEY : 0;
+  const flagsUp = isExt ? (KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY) : KEYEVENTF_KEYUP;
+
+  keybd_event(modifierVK, scanMod, 0, 0);
+  keybd_event(vk, scanVk, flagsDown, 0);
+  keybd_event(vk, scanVk, flagsUp, 0);
+  keybd_event(modifierVK, scanMod, KEYEVENTF_KEYUP, 0);
 }
 
 function pressTripleCombo(mod1, mod2, keyCharOrVK) {
   if (!keybd_event) return;
   const vk = typeof keyCharOrVK === 'string' ? keyCharOrVK.toUpperCase().charCodeAt(0) : keyCharOrVK;
-  keybd_event(mod1, 0, 0, 0);
-  keybd_event(mod2, 0, 0, 0);
-  keybd_event(vk, 0, 0, 0);
-  keybd_event(vk, 0, KEYEVENTF_KEYUP, 0);
-  keybd_event(mod2, 0, KEYEVENTF_KEYUP, 0);
-  keybd_event(mod1, 0, KEYEVENTF_KEYUP, 0);
+  const isExt = isExtendedVK(vk);
+  const scanMod1 = MapVirtualKeyA ? (MapVirtualKeyA(mod1, 0) & 0xFF) : 0;
+  const scanMod2 = MapVirtualKeyA ? (MapVirtualKeyA(mod2, 0) & 0xFF) : 0;
+  const scanVk = MapVirtualKeyA ? (MapVirtualKeyA(vk, 0) & 0xFF) : 0;
+  const flagsDown = isExt ? KEYEVENTF_EXTENDEDKEY : 0;
+  const flagsUp = isExt ? (KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY) : KEYEVENTF_KEYUP;
+
+  keybd_event(mod1, scanMod1, 0, 0);
+  keybd_event(mod2, scanMod2, 0, 0);
+  keybd_event(vk, scanVk, flagsDown, 0);
+  keybd_event(vk, scanVk, flagsUp, 0);
+  keybd_event(mod2, scanMod2, KEYEVENTF_KEYUP, 0);
+  keybd_event(mod1, scanMod1, KEYEVENTF_KEYUP, 0);
 }
 
 function typeText(text) {
@@ -189,6 +214,45 @@ function typeText(text) {
     keybd_event(0, code, KEYEVENTF_UNICODE, 0);
     keybd_event(0, code, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, 0);
   }
+}
+
+// --- Stateful Alt+Tab App Switcher Controller ---
+let isAltHeldForTab = false;
+let altTabReleaseTimer = null;
+
+function releaseAltTab() {
+  if (altTabReleaseTimer) {
+    clearTimeout(altTabReleaseTimer);
+    altTabReleaseTimer = null;
+  }
+  if (isAltHeldForTab) {
+    if (keybd_event) {
+      keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    }
+    isAltHeldForTab = false;
+  }
+}
+
+function stepAltTab(direction = 'next') {
+  if (!keybd_event) return;
+  if (!isAltHeldForTab) {
+    keybd_event(VK_MENU, 0, 0, 0); // Hold Alt down
+    isAltHeldForTab = true;
+  }
+  if (direction === 'prev') {
+    keybd_event(VK_SHIFT, 0, 0, 0);
+    keybd_event(VK_TAB, 0, 0, 0);
+    keybd_event(VK_TAB, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+  } else {
+    keybd_event(VK_TAB, 0, 0, 0);
+    keybd_event(VK_TAB, 0, KEYEVENTF_KEYUP, 0);
+  }
+  // Auto-release Alt if no next/prev step is triggered within 2200ms
+  if (altTabReleaseTimer) clearTimeout(altTabReleaseTimer);
+  altTabReleaseTimer = setTimeout(() => {
+    releaseAltTab();
+  }, 2200);
 }
 
 function pressSpecialKey(keyType) {
@@ -214,7 +278,7 @@ function pressSpecialKey(keyType) {
   else if (k === 'ctrl+y' || k === 'redo') pressCombo(VK_CONTROL, 'Y');
   else if (k === 'ctrl+s' || k === 'save') pressCombo(VK_CONTROL, 'S');
   else if (k === 'win+shift+s' || k === 'snip') pressTripleCombo(VK_LWIN, VK_SHIFT, 'S');
-  else if (k === 'alt+tab') pressCombo(VK_MENU, VK_TAB);
+  else if (k === 'alt+tab') stepAltTab('next');
   else if (k === 'alt+f4') pressCombo(VK_MENU, VK_F4);
   else if (k === 'alt+space') pressCombo(VK_MENU, VK_SPACE);
 }
@@ -406,10 +470,36 @@ app.post('/api/upload', (req, res) => {
   req.on('end', () => {
     if (res.headersSent) return; // already responded (e.g. 413 path)
     writeStream.end();
-    const downloadLink = `http://localhost:${PORT_HTTP}/api/files/${encodeURIComponent(actualFileName)}?pin=${SERVER_PIN}`;
-    console.log(`[+] File uploaded from client: ${actualFileName} (${(uploadedBytes / 1024 / 1024).toFixed(2)} MB)`);
-    console.log(`    -> Download/View on PC: ${downloadLink}`);
-    res.json({ success: true, filename: actualFileName });
+
+    const ext = path.extname(actualFileName).toLowerCase();
+    const isImage = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'].includes(ext);
+    const isPdf = ext === '.pdf';
+
+    // Auto-open image or PDF in original form on PC desktop & copy image to clipboard
+    if (process.platform === 'win32') {
+      const { exec } = require('child_process');
+      if (isImage) {
+        // Copy image directly to Windows clipboard so user can instantly paste it with Ctrl+V
+        const psClip = `Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; try { $img = [System.Drawing.Image]::FromFile('${targetPath.replace(/'/g, "''")}'); [System.Windows.Forms.Clipboard]::SetImage($img); } catch {}`;
+        const b64 = Buffer.from(psClip, 'utf16le').toString('base64');
+        exec(`powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${b64}`, () => {});
+        exec(`start "" "${targetPath.replace(/"/g, '""')}"`, (err) => {
+          if (err) console.warn('[!] Auto-open on PC:', err.message);
+        });
+      } else if (isPdf) {
+        exec(`start "" "${targetPath.replace(/"/g, '""')}"`, (err) => {
+          if (err) console.warn('[!] Auto-open on PC:', err.message);
+        });
+      }
+    }
+
+    console.log(`\n[+] Transferred ${isImage ? 'Original Image' : isPdf ? 'Original PDF' : 'File'} from phone: ${actualFileName}`);
+    if (isImage) {
+      console.log(`    -> Transferred & copied original image to PC Clipboard and opened on screen!`);
+    } else if (isPdf) {
+      console.log(`    -> Displaying original PDF on PC screen!`);
+    }
+    res.json({ success: true, filename: actualFileName, isImage, isPdf });
   });
 
   req.on('error', err => {
@@ -464,7 +554,7 @@ function handleWsConnection(ws, req) {
   const remoteIp = req.socket.remoteAddress || 'unknown';
   let authenticated = false;
   let sessionTimeoutTimer = null;
-  let currentTimeoutMins = 60; // Initial default session timeout is 1 hour (60 minutes)
+  let currentTimeoutMins = 0; // Infinite session by default (0 = never timeout)
 
   function startSessionTimer(mins) {
     if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
@@ -482,10 +572,11 @@ function handleWsConnection(ws, req) {
     }
   }
 
-  // Start initial default 1-hour automatic session timeout
-  startSessionTimer(60);
+  // Default infinite connection - no auto-disconnect timer
+  startSessionTimer(0);
 
   ws.on('close', () => {
+    releaseAltTab();
     if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
   });
 
@@ -545,8 +636,44 @@ function handleWsConnection(ws, req) {
         mouseScroll(data.dy || 0);
       } else if (msgType === 'text') {
         typeText(String(data.text || '').slice(0, 1000));
+      } else if (msgType === 'chat') {
+        const chatText = String(data.text || '').trim();
+        if (data.isAttachment) {
+          console.log(`\n[+] Media/File Received: "${chatText}"`);
+        } else {
+          console.log(`\n[+] Text from Phone: "${chatText}"`);
+          if (data.autoType !== false && chatText) {
+            typeText(chatText.slice(0, 1000));
+          }
+        }
+        ws.send(JSON.stringify({
+          type: 'chat_ack',
+          status: 'delivered',
+          timestamp: Date.now()
+        }));
+      } else if (msgType === 'alt_tab_step') {
+        stepAltTab(data.direction || 'next');
+        ws.send(JSON.stringify({
+          type: 'alt_tab_status',
+          active: isAltHeldForTab
+        }));
+      } else if (msgType === 'alt_tab_release') {
+        releaseAltTab();
+        ws.send(JSON.stringify({
+          type: 'alt_tab_status',
+          active: false
+        }));
       } else if (msgType === 'key' || msgType === 'keycode') {
-        pressSpecialKey(data.key || '');
+        const keyName = String(data.key || '').toLowerCase().trim();
+        if (keyName === 'alt+tab') {
+          stepAltTab('next');
+          ws.send(JSON.stringify({
+            type: 'alt_tab_status',
+            active: isAltHeldForTab
+          }));
+        } else {
+          pressSpecialKey(data.key || '');
+        }
       } else if (msgType === 'ping') {
         ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp || 0 }));
       }
@@ -558,12 +685,14 @@ function handleWsConnection(ws, req) {
 
 // WebSocket attached directly to HTTP Server (works on PORT_HTTP, PR-2 maxPayload 64KB)
 const wssPrimary = new WebSocket.Server({ server: httpServer, maxPayload: 64 * 1024 });
-wssPrimary.on('connection', (ws, req) => handleWsConnection(ws, req));
+wssPrimary.on('connection', (ws, req) => {
+  handleWsConnection(ws, req);
+});
 
 // Optional Secondary WebSocket listener on PORT_WS for legacy clients
 if (PORT_WS !== PORT_HTTP) {
   try {
-    const wssSecondary = new WebSocket.Server({ port: PORT_WS, maxPayload: 64 * 1024 });
+    const wssSecondary = new WebSocket.Server({ port: PORT_WS, host: '0.0.0.0', maxPayload: 64 * 1024 });
     wssSecondary.on('connection', (ws, req) => handleWsConnection(ws, req));
     wssSecondary.on('error', (e) => {
       if (e.code === 'EADDRINUSE') {
@@ -577,28 +706,21 @@ if (PORT_WS !== PORT_HTTP) {
   }
 }
 
-httpServer.listen(PORT_HTTP, () => {
-  const netInterfaces = getNetworkInterfacesList();
+httpServer.listen(PORT_HTTP, '0.0.0.0', () => {
   const localIP = getPrimaryIP();
   const quickLink = `http://${localIP}:${PORT_HTTP}/?ip=${localIP}&port=${PORT_HTTP}&code=${SERVER_PIN}`;
-  const qrImageLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(quickLink)}`;
 
   console.log('================================================================');
   console.log('        [+] VIRTUAL MOUSE & KEYBOARD SERVER ACTIVE');
   console.log('================================================================');
-  console.log(`  [+] Mobile IP (Wi-Fi):       ${localIP}`);
+  console.log(`  [+] PC Server IPv4:          ${localIP}`);
   console.log(`  [+] Web & WS Port:           ${PORT_HTTP}`);
   console.log(`  [*] CONNECT CODE (PIN):      ${SERVER_PIN}`);
-  console.log(`  [+] File Transfer Directory: ${TRANSFER_DIR}`);
   console.log('================================================================');
   console.log('  [SCAN ME] QR CODE FOR MOBILE INSTANT CONNECT:');
   qrcode.toString(quickLink, { type: 'terminal', small: true }, (err, qrStr) => {
     if (!err && qrStr) {
       console.log(qrStr);
-      console.log('================================================================');
-      console.log('  - Press Ctrl+U (or Alt+U / Cmd+U) for file selection dialog');
-      console.log('  - Press Ctrl+V (or Alt+V / Cmd+V) to paste copied file/text');
-      console.log('  - Press Ctrl+S (or Alt+S / Cmd+S) to open save folder');
       console.log('================================================================');
     }
   });

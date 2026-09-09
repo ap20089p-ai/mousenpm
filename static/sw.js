@@ -3,13 +3,13 @@
  * Provides offline caching, fast load times, and PWA capabilities.
  * ------------------------------------------------------------- */
 
-const CACHE_NAME = "virtual-mouse-v2.5";
+const CACHE_NAME = "mouse-vm-v1.0.16";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
-  "./style.css?v=2.5",
-  "./app.js?v=2.5",
-  "./manifest.json?v=2.5",
+  "./style.css?v=2.9",
+  "./app.js?v=2.9",
+  "./manifest.json?v=2.9",
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png"

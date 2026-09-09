@@ -6,27 +6,39 @@
 
 ## ⚡ Quick Start
 
-### 1. Installation
+### Option A: Running Locally in this Project Repository
 
-Install `mouse-vm` globally via npm:
+If you have cloned or downloaded this project folder (`c:\project\mouseirtual`), start the server directly:
 
 ```bash
-npm install -g mouse-vm
+npm start
 ```
 
-*(Alternatively, run instantly without installation using `npx mouse-vm`)*
+*(Alternative commands from this folder)*:
+
+```bash
+node server.js
+# or
+npm run dev
+```
 
 ---
 
-### 2. Launch Desktop Server
+### Option B: Global CLI Installation / NPX
 
-Start the server from your terminal:
+You can also run or install `mouse-vm` anywhere on your machine via npm:
 
 ```bash
-mouse-vm
-```
+# Run instantly with npx (no install required):
+npx mouse-vm
 
-*(Command aliases: `vm2do`, `vm`, `npx mouse-vm`)*
+# Or install globally:
+npm install -g mouse-vm
+
+# Then start anytime with:
+mouse-vm
+# (Aliases: vm2do, vm)
+```
 
 The terminal will generate your PC's local Wi-Fi IP address, web port, pairing PIN, and an ASCII **QR Code**:
 
@@ -120,7 +132,7 @@ mouse-vm --transfer-path="C:\Users\YourName\Desktop\Transfers"
 
 # Show Version & Help
 mouse-vm --version
-mouse-vm --help
+mouse-vm --helpI
 ```
 
 ---
@@ -151,7 +163,3 @@ mouse-vm --help
   ```
 
 ---
-
-## 📄 License
-
-MIT License

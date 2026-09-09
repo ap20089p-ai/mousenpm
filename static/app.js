@@ -79,22 +79,49 @@ document.addEventListener("DOMContentLoaded", () => {
     const scrollNotch = document.getElementById("scroll-wheel-notch");
     const btnQuickKeyboard = document.getElementById("btn-quick-keyboard");
 
-    // Dedicated Keyboard & TextPad UI
+    // Dedicated Keyboard & Compact Live Auto-Type UI
     const kbLiveInput = document.getElementById("kb-live-input");
     const btnLiveBackspace = document.getElementById("btn-live-backspace");
-    const kbTextpadInput = document.getElementById("kb-textpad-input");
-    const btnSendTextpad = document.getElementById("btn-send-textpad");
-    const btnTextpadClear = document.getElementById("btn-textpad-clear");
-    const btnClearAllText = document.getElementById("btn-clear-all-text");
-    const lblKbStatus = document.getElementById("lbl-kb-status");
     const pillLiveTransmitting = document.getElementById("pill-live-transmitting");
     const keycodeBtns = document.querySelectorAll(".keycode-btn");
-    
-    // Unified Keyboard Mode Toggles
-    const btnModeLive = document.getElementById("btn-mode-live");
-    const btnModeTextpad = document.getElementById("btn-mode-textpad");
-    const viewModeLive = document.getElementById("view-mode-live");
-    const viewModeTextpad = document.getElementById("view-mode-textpad");
+    const btnLiveClear = document.getElementById("btn-live-clear");
+    const btnProminentEnter = document.getElementById("btn-prominent-enter");
+
+    // Compact Media Transfer UI (Browse, Show, Direct Transfer)
+    const btnBrowseImage = document.getElementById("btn-browse-image");
+    const btnBrowseFile = document.getElementById("btn-browse-file");
+    const btnShowPreview = document.getElementById("btn-show-preview");
+    const compactImagePicker = document.getElementById("compact-image-picker");
+    const compactFilePicker = document.getElementById("compact-file-picker");
+    const compactStagedStrip = document.getElementById("compact-staged-strip");
+    const stagedThumbBox = document.getElementById("staged-thumb-box");
+    const stagedFileName = document.getElementById("staged-file-name");
+    const stagedFileSize = document.getElementById("staged-file-size");
+    const btnTransferDirectNow = document.getElementById("btn-transfer-direct-now");
+    const btnCancelStaged = document.getElementById("btn-cancel-staged");
+    const compactUploadProgress = document.getElementById("compact-upload-progress");
+    const compactUploadBar = document.getElementById("compact-upload-bar");
+    const compactUploadText = document.getElementById("compact-upload-text");
+    const compactTransferStatus = document.getElementById("compact-transfer-status");
+    const btnTriggerShowPreview = document.getElementById("btn-trigger-show-preview");
+
+    // Image Preview Lightbox Modal Elements
+    const modalImagePreview = document.getElementById("modal-image-preview");
+    const previewModalImg = document.getElementById("preview-modal-img");
+    const previewModalTitle = document.getElementById("preview-modal-title");
+    const previewModalSub = document.getElementById("preview-modal-sub");
+    const btnCloseImageModal = document.getElementById("btn-close-image-modal");
+    const btnDismissImageModal = document.getElementById("btn-dismiss-image-modal");
+    const btnModalDirectTransfer = document.getElementById("btn-modal-direct-transfer");
+
+    // Art Studio Modal UI
+    const modalArtTransfer = document.getElementById("modal-art-transfer");
+    const btnCloseArtModal = document.getElementById("btn-close-art-modal");
+    const artCanvas = document.getElementById("art-canvas");
+    const colorSwatches = document.querySelectorAll(".color-swatch");
+    const brushSizeBtns = document.querySelectorAll(".brush-size-btn");
+    const btnClearArtCanvas = document.getElementById("btn-clear-art-canvas");
+    const btnSubmitArtTransfer = document.getElementById("btn-submit-art-transfer");
 
     // Settings UI
     const sliderDpi = document.getElementById("slider-dpi");
@@ -102,6 +129,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectSessionTimeout = document.getElementById("select-session-timeout");
     const btnReconnect = document.getElementById("btn-menu-reconnect");
     const btnDisconnect = document.getElementById("btn-action-disconnect");
+    const chkAlwaysReconnect = document.getElementById("chk-always-reconnect");
+    const toggleAlwaysReconnect = document.getElementById("toggle-always-reconnect");
     let clientSessionTimer = null;
 
     // File Transfer UI
@@ -181,8 +210,50 @@ document.addEventListener("DOMContentLoaded", () => {
     inputPort.value = paramPort || savedPort || "5001";
     inputPin.value = paramPin || savedPin || "";
 
-    // Restore saved Connection Session Timeout (default 1 Hour / 60 minutes)
-    const savedTimeout = window.localStorage.getItem("virtualMouse.sessionTimeout") || "60";
+    // Restore Always Connect & Reconnect preference (default: true)
+    let alwaysReconnect = window.localStorage.getItem("virtualMouse.alwaysReconnect") !== "false";
+    if (chkAlwaysReconnect) chkAlwaysReconnect.checked = alwaysReconnect;
+    if (toggleAlwaysReconnect) toggleAlwaysReconnect.checked = alwaysReconnect;
+
+    function setAlwaysReconnect(val) {
+        alwaysReconnect = !!val;
+        window.localStorage.setItem("virtualMouse.alwaysReconnect", String(alwaysReconnect));
+        if (chkAlwaysReconnect) chkAlwaysReconnect.checked = alwaysReconnect;
+        if (toggleAlwaysReconnect) toggleAlwaysReconnect.checked = alwaysReconnect;
+        showToast(alwaysReconnect ? "Always Connect & Reconnect: Enabled" : "Always Connect: Disabled");
+    }
+
+    if (chkAlwaysReconnect) {
+        chkAlwaysReconnect.addEventListener("change", () => setAlwaysReconnect(chkAlwaysReconnect.checked));
+    }
+    if (toggleAlwaysReconnect) {
+        toggleAlwaysReconnect.addEventListener("change", () => setAlwaysReconnect(toggleAlwaysReconnect.checked));
+    }
+
+    // Screen Wake Lock to prevent phone screen from turning off and disconnecting
+    let wakeLock = null;
+    async function requestWakeLock() {
+        try {
+            if ("wakeLock" in navigator && !wakeLock) {
+                wakeLock = await navigator.wakeLock.request("screen");
+                wakeLock.addEventListener("release", () => {
+                    wakeLock = null;
+                });
+            }
+        } catch (e) {
+            // WakeLock not supported or ignored by platform
+        }
+    }
+
+    function releaseWakeLock() {
+        if (wakeLock) {
+            try { wakeLock.release(); } catch (e) {}
+            wakeLock = null;
+        }
+    }
+
+    // Restore saved Connection Session Timeout (default 0 = Infinite / Never)
+    const savedTimeout = window.localStorage.getItem("virtualMouse.sessionTimeout") || "0";
     if (selectSessionTimeout) {
         selectSessionTimeout.value = savedTimeout;
     }
@@ -226,35 +297,62 @@ document.addEventListener("DOMContentLoaded", () => {
         selectSessionTimeout.addEventListener("change", () => {
             const mins = parseInt(selectSessionTimeout.value, 10) || 0;
             updateActiveSessionTimeout(mins);
-            const label = mins === 0 ? "Disabled (Unlimited)" : (mins >= 60 ? `${mins / 60} Hour(s)` : `${mins} Mins`);
+            const label = mins === 0 ? "Infinite (Never Timeout)" : (mins >= 60 ? `${mins / 60} Hour(s)` : `${mins} Mins`);
             showToast(`Session Timeout set to: ${label}`);
         });
     }
 
-    // Auto-connect on load if URL params or saved pairing credentials are present
-    const targetAutoIp = paramIp || savedHost;
+    // Handle scan parameters and persistent auto-connect
+    const hasScanParams = !!(paramIp && paramPin);
+    if (hasScanParams) {
+        window.localStorage.setItem("virtualMouse.userDisconnected", "false");
+        isUserDisconnect = false;
+        if (paramIp) window.localStorage.setItem("virtualMouse.lastConnectedIp", paramIp);
+        if (paramPort) window.localStorage.setItem("virtualMouse.lastConnectedPort", paramPort);
+        if (paramPin) window.localStorage.setItem("virtualMouse.lastConnectedPin", paramPin);
+    }
+
+    const userExplicitlyDisconnected = window.localStorage.getItem("virtualMouse.userDisconnected") === "true";
+    const targetAutoIp = paramIp || savedHost || (isActualNetworkIP ? detectedHost : "");
     const targetAutoPin = paramPin || savedPin;
     const targetAutoPort = paramPort || savedPort || "5000";
 
-    if (targetAutoIp && targetAutoPin) {
-        setTimeout(() => {
-            if (!isConnected && !isUserDisconnect) {
-                connectToServer(targetAutoIp, targetAutoPort, targetAutoPin);
+    // If Always Connect is enabled or scanned via QR code, auto-connect immediately
+    if (targetAutoIp && targetAutoPin && (alwaysReconnect || hasScanParams)) {
+        if (hasScanParams) {
+            const splashTagline = document.querySelector(".splash-tagline");
+            if (splashTagline) {
+                splashTagline.innerHTML = `<span style="color:#00f0ff;font-weight:600;display:inline-flex;align-items:center;gap:6px;"><span class="status-indicator connecting-state" style="display:inline-block;width:8px;height:8px;box-shadow:none;"></span> Connecting to PC (${targetAutoIp})...</span>`;
             }
-        }, 800);
+        }
+        if (!userExplicitlyDisconnected || hasScanParams) {
+            setTimeout(() => {
+                if (!isConnected && !isUserDisconnect) {
+                    connectToServer(targetAutoIp, targetAutoPort, targetAutoPin);
+                }
+            }, 100);
+        }
     }
-
 
     // ================= Navigation & View Management =================
 
-    let splashTimeout = setTimeout(() => {
-        navigateTo("screen-home");
-    }, 2000);
+    let splashTimeout = null;
+    if (!hasScanParams) {
+        splashTimeout = setTimeout(() => {
+            if (!isConnected && screens.splash && screens.splash.classList.contains("active")) {
+                navigateTo("screen-home");
+            }
+        }, 2000);
+    }
 
-    screens.splash.addEventListener("click", () => {
-        clearTimeout(splashTimeout);
-        navigateTo("screen-home");
-    });
+    if (screens.splash) {
+        screens.splash.addEventListener("click", () => {
+            if (splashTimeout) clearTimeout(splashTimeout);
+            if (!isConnected) {
+                navigateTo("screen-home");
+            }
+        });
+    }
 
     function navigateTo(targetScreenId) {
         if (targetScreenId === "screen-splash") {
@@ -370,23 +468,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Initial sync on load
 
-    // --- Keep-Alive Ping & Auto-Disconnect Helpers ---
+    // --- Keep-Alive Ping & Screen Wake Lock Helpers ---
     let lastPongReceivedTime = Date.now();
+    let reconnectAttempts = 0;
+    let isReconnecting = false;
+    let lastConnectTarget = { ip: "", port: "", pin: "" };
 
     function startHeartbeat() {
         stopHeartbeat();
         lastPongReceivedTime = Date.now();
         heartbeatTimer = setInterval(() => {
             if (socket && socket.readyState === WebSocket.OPEN) {
-                // If no pong or traffic received in 15s, auto-disconnect cleanly
-                if (Date.now() - lastPongReceivedTime > 15000) {
-                    console.warn("Heartbeat timeout: Auto-disconnecting stale connection");
-                    stopHeartbeat();
-                    try { socket.close(); } catch (e) {}
-                    updateConnectionUI("disconnected", "Auto-Disconnected (Lost Connection)");
-                    showToast("Disconnected: PC server lost / timed out.");
-                    return;
-                }
                 socket.send(JSON.stringify({ type: "ping", timestamp: Date.now() }));
             }
         }, 5000); // Send ping every 5 seconds
@@ -399,13 +491,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    function stopAutoReconnect() {
+        if (autoReconnectTimer) {
+            clearTimeout(autoReconnectTimer);
+            autoReconnectTimer = null;
+        }
+        isReconnecting = false;
+        reconnectAttempts = 0;
+    }
+
     function scheduleAutoReconnect(ip, port, pin) {
+        if (isUserDisconnect || !alwaysReconnect) return;
+
+        const targetIp = ip || lastConnectTarget.ip || window.localStorage.getItem("virtualMouse.lastConnectedIp") || inputIp.value.trim();
+        const targetPort = port || lastConnectTarget.port || window.localStorage.getItem("virtualMouse.lastConnectedPort") || inputPort.value.trim() || "5000";
+        const targetPin = pin || lastConnectTarget.pin || window.localStorage.getItem("virtualMouse.lastConnectedPin") || inputPin.value.trim();
+
+        if (!targetIp || !targetPin) return;
+
+        lastConnectTarget = { ip: targetIp, port: targetPort, pin: targetPin };
+
         if (autoReconnectTimer) clearTimeout(autoReconnectTimer);
+        isReconnecting = true;
+        reconnectAttempts++;
+
+        const delay = Math.min(3000, 1200 + Math.min(reconnectAttempts * 300, 1500));
+        updateConnectionUI("connecting", `Reconnecting (attempt #${reconnectAttempts})...`);
+
         autoReconnectTimer = setTimeout(() => {
             if (!isConnected && !isUserDisconnect) {
-                connectToServer(ip, port, pin);
+                console.log(`[AutoReconnect] Infinite retry attempt #${reconnectAttempts} to ${lastConnectTarget.ip}:${lastConnectTarget.port}`);
+                connectToServer(lastConnectTarget.ip, lastConnectTarget.port, lastConnectTarget.pin);
             }
-        }, 3000);
+        }, delay);
     }
 
     function connectToServer(ip, port, pin) {
@@ -416,28 +534,40 @@ document.addEventListener("DOMContentLoaded", () => {
             if (inputIp) inputIp.value = ip;
         }
 
-        if (autoReconnectTimer) {
-            clearTimeout(autoReconnectTimer);
-            autoReconnectTimer = null;
+        if (ip && pin) {
+            lastConnectTarget = { ip, port: port || "5000", pin };
         }
+
         stopHeartbeat();
         if (socket) {
             try { socket.close(); } catch (e) {}
             socket = null;
         }
 
-        updateConnectionUI("connecting");
+        if (!isReconnecting) {
+            updateConnectionUI("connecting");
+        }
         
+        const wsPort = port || "5000";
         const connectTimeout = setTimeout(() => {
             if (!isConnected) {
-                if (socket) socket.close();
-                updateConnectionUI("disconnected", "Connection Timed Out");
-                showToast("Could not connect to PC server.");
+                if (socket) {
+                    try { socket.close(); } catch (e) {}
+                }
+                if (alwaysReconnect && !isUserDisconnect) {
+                    console.warn("[WS] Handshake timed out; retrying auto-reconnect...");
+                    scheduleAutoReconnect(ip, wsPort, pin);
+                } else {
+                    updateConnectionUI("disconnected", "Connection Timed Out");
+                    showToast("Could not connect to PC server.");
+                    if (screens.splash && screens.splash.classList.contains("active")) {
+                        navigateTo("screen-home");
+                    }
+                }
             }
-        }, 4000);
+        }, 5000);
 
         try {
-            const wsPort = port || "5001";
             const isHttps = window.location.protocol === "https:";
             const wsProtocol = isHttps ? "wss" : "ws";
             
@@ -459,23 +589,40 @@ document.addEventListener("DOMContentLoaded", () => {
                         // Heartbeat ack acknowledged
                         return;
                     }
+                    if (data.type === "chat_ack") {
+                        handleChatAck(data);
+                        return;
+                    }
+                    if (data.type === "chat") {
+                        handleIncomingChat(data);
+                        return;
+                    }
+                    if (data.type === "alt_tab_status") {
+                        updateAltTabUI(data.active);
+                        return;
+                    }
                     if (data.type === "session_timeout") {
                         isUserDisconnect = true;
                         stopHeartbeat();
                         stopClientSessionTimer();
+                        stopAutoReconnect();
+                        releaseWakeLock();
                         if (socket) { try { socket.close(); } catch(e){} }
                         updateConnectionUI("disconnected", "Session Timed Out");
-                        showToast(data.message || "Connection session timed out. Reconnect whenever ready!");
+                        showToast(data.message || "Connection session timed out.");
                         navigateTo("screen-home");
                         return;
                     }
                     if (data.type === "auth_result") {
                         if (data.status === "success") {
                             clearTimeout(connectTimeout);
+                            if (splashTimeout) clearTimeout(splashTimeout);
+                            stopAutoReconnect();
                             
                             window.localStorage.setItem("virtualMouse.lastConnectedIp", ip);
                             window.localStorage.setItem("virtualMouse.lastConnectedPort", wsPort);
                             if (pin) window.localStorage.setItem("virtualMouse.lastConnectedPin", pin);
+                            window.localStorage.setItem("virtualMouse.userDisconnected", "false");
                             
                             const devName = inputDevice.value || "My PC";
                             lblDeviceTitle.textContent = devName;
@@ -483,42 +630,53 @@ document.addEventListener("DOMContentLoaded", () => {
                             
                             updateConnectionUI("connected");
                             startHeartbeat();
+                            requestWakeLock();
 
-                            // Start session timeout timer based on user configured setting (default 1 Hour / 60 mins)
-                            const currentTimeoutMins = parseInt(selectSessionTimeout ? selectSessionTimeout.value : "60", 10) || 60;
+                            // Default session timeout is 0 (Infinite / Never Disconnect)
+                            const currentTimeoutMins = parseInt(selectSessionTimeout ? selectSessionTimeout.value : "0", 10) || 0;
                             updateActiveSessionTimeout(currentTimeoutMins);
 
                             isUserDisconnect = false;
                             showToast("Connected & Paired with PC successfully!");
                             
                             setTimeout(() => {
-                                navigateTo("screen-mouse");
-                            }, 600);
+                                navigateTo("screen-keyboard");
+                                if (kbLiveInput) {
+                                    try { kbLiveInput.focus(); } catch (err) {}
+                                }
+                            }, 250);
                         } else {
                             clearTimeout(connectTimeout);
+                            if (splashTimeout) clearTimeout(splashTimeout);
+                            stopAutoReconnect();
                             showToast(data.message || "Invalid Connect PIN!");
                             updateConnectionUI("disconnected", "Invalid PIN / Code");
+                            if (screens.splash && screens.splash.classList.contains("active")) {
+                                navigateTo("screen-home");
+                            }
                             if (socket) socket.close();
                         }
                     }
                 } catch (err) {}
             };
 
-
             socket.onerror = () => {
-                // Error handled by timeout
+                // Handled in onclose / connectTimeout
             };
 
             socket.onclose = () => {
                 clearTimeout(connectTimeout);
                 stopHeartbeat();
                 stopClientSessionTimer();
-                if (isConnected) {
+                releaseWakeLock();
+                const wasConnected = isConnected;
+                isConnected = false;
+
+                if (!isUserDisconnect && alwaysReconnect) {
+                    scheduleAutoReconnect(ip, wsPort, pin);
+                } else {
                     updateConnectionUI("disconnected");
-                    if (!isUserDisconnect) {
-                        showToast("Connection lost. Reconnecting...");
-                        scheduleAutoReconnect(ip, wsPort, pin);
-                    } else {
+                    if (wasConnected) {
                         showToast("Connection to PC closed.");
                     }
                 }
@@ -526,11 +684,16 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (e) {
             clearTimeout(connectTimeout);
             stopHeartbeat();
-            startSimulatorFallback("Cannot connect directly. Running Interactive Mode.");
+            if (alwaysReconnect && !isUserDisconnect) {
+                scheduleAutoReconnect(ip, wsPort, pin);
+            } else {
+                startSimulatorFallback("Cannot connect directly. Running Interactive Mode.");
+            }
         }
     }
 
     function startSimulatorFallback(reason) {
+        if (splashTimeout) clearTimeout(splashTimeout);
         lblDeviceTitle.textContent = `${inputDevice.value || "My PC"} (Interactive)`;
         lblDeviceAddress.textContent = `${inputIp.value || "127.0.0.1"}:${inputPort.value || "5001"}`;
         
@@ -538,8 +701,11 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast(reason || "Opened in Interactive Mode!");
         
         setTimeout(() => {
-            navigateTo("screen-mouse");
-        }, 600);
+            navigateTo("screen-keyboard");
+            if (kbLiveInput) {
+                try { kbLiveInput.focus(); } catch (err) {}
+            }
+        }, 300);
     }
 
     function sendMessage(msgObj) {
@@ -564,6 +730,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isConnected) {
             disconnectDevice();
         } else {
+            isUserDisconnect = false;
+            window.localStorage.setItem("virtualMouse.userDisconnected", "false");
             const ip = inputIp.value.trim() || "127.0.0.1";
             const port = inputPort.value.trim() || "5001";
             const pin = inputPin.value.trim();
@@ -580,7 +748,10 @@ document.addEventListener("DOMContentLoaded", () => {
             isSimulatorMode = true;
             updateConnectionUI("simulated");
             showToast("Connected via USB (Interactive)!");
-            navigateTo("screen-mouse");
+            navigateTo("screen-keyboard");
+            if (kbLiveInput) {
+                try { kbLiveInput.focus(); } catch (err) {}
+            }
         }, 900);
     });
 
@@ -603,7 +774,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         isSimulatorMode = true;
                         updateConnectionUI("simulated");
                         showToast(`Paired with ${device.name || "Bluetooth Device"}!`);
-                        navigateTo("screen-mouse");
+                        navigateTo("screen-keyboard");
+                        if (kbLiveInput) {
+                            try { kbLiveInput.focus(); } catch (err) {}
+                        }
                     }
                 } catch (err) {
                     if (err.name !== "NotFoundError") {
@@ -624,6 +798,8 @@ document.addEventListener("DOMContentLoaded", () => {
         btnConnectBtPan.addEventListener("click", () => {
             // Connect to the PC's Bluetooth adapter IP
             const btIp = "169.254.205.112";
+            isUserDisconnect = false;
+            window.localStorage.setItem("virtualMouse.userDisconnected", "false");
             updateConnectionUI("connecting");
             showToast("Connecting via Bluetooth Network...");
             connectToServer(btIp, "5001", inputPin.value.trim());
@@ -636,6 +812,8 @@ document.addEventListener("DOMContentLoaded", () => {
         device.addEventListener("click", () => {
             const name = device.getAttribute("data-name") || "Windows PC (Bluetooth)";
             const addr = device.getAttribute("data-ip") || "169.254.205.112";
+            isUserDisconnect = false;
+            window.localStorage.setItem("virtualMouse.userDisconnected", "false");
             lblDeviceTitle.textContent = name;
             lblDeviceAddress.textContent = addr;
             connectToServer(addr, "5001", inputPin.value.trim());
@@ -644,11 +822,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function disconnectDevice() {
         isUserDisconnect = true;
-        if (autoReconnectTimer) {
-            clearTimeout(autoReconnectTimer);
-            autoReconnectTimer = null;
-        }
+        window.localStorage.setItem("virtualMouse.userDisconnected", "true");
+        stopAutoReconnect();
         stopHeartbeat();
+        stopClientSessionTimer();
+        releaseWakeLock();
         if (socket) {
             try { socket.close(1000, "User disconnected"); } catch (e) {}
             socket = null;
@@ -663,25 +841,26 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Persistent Connection: Auto-Reconnect when returning to App / Tab ---
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") {
-            if (!isConnected && !isUserDisconnect) {
+            if (isConnected) {
+                requestWakeLock();
+            } else if (!isUserDisconnect && alwaysReconnect) {
                 const ip = window.localStorage.getItem("virtualMouse.lastConnectedIp") || inputIp.value.trim();
                 const port = window.localStorage.getItem("virtualMouse.lastConnectedPort") || inputPort.value.trim() || "5000";
                 const pin = window.localStorage.getItem("virtualMouse.lastConnectedPin") || inputPin.value.trim();
                 if (ip && pin) {
-                    showToast("Restoring connection to PC...");
-                    connectToServer(ip, port, pin);
+                    scheduleAutoReconnect(ip, port, pin);
                 }
             }
         }
     });
 
     window.addEventListener("online", () => {
-        if (!isConnected && !isUserDisconnect) {
+        if (!isConnected && !isUserDisconnect && alwaysReconnect) {
             const ip = window.localStorage.getItem("virtualMouse.lastConnectedIp") || inputIp.value.trim();
             const port = window.localStorage.getItem("virtualMouse.lastConnectedPort") || inputPort.value.trim() || "5000";
             const pin = window.localStorage.getItem("virtualMouse.lastConnectedPin") || inputPin.value.trim();
             if (ip && pin) {
-                connectToServer(ip, port, pin);
+                scheduleAutoReconnect(ip, port, pin);
             }
         }
     });
@@ -1038,78 +1217,581 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    const btnLiveEnter = document.getElementById("btn-live-enter");
-    if (btnLiveEnter) {
-        btnLiveEnter.addEventListener("click", () => {
+    // Prominent Enter Button & Live Clear Button
+    if (btnLiveClear && kbLiveInput) {
+        btnLiveClear.addEventListener("click", () => {
+            kbLiveInput.value = "";
+            kbLiveInput.focus();
+        });
+    }
+
+    if (btnProminentEnter) {
+        btnProminentEnter.addEventListener("click", () => {
             sendMessage({
                 type: "keycode",
                 key: "enter"
             });
-            kbLiveInput.focus();
-        });
-    }
-
-    if (btnLiveBackspace) {
-        btnLiveBackspace.addEventListener("click", () => {
-            sendMessage({
-                type: "keycode",
-                key: "backspace"
-            });
-            kbLiveInput.focus();
-        });
-    }
-
-    // Unified Keyboard Mode Toggle Handlers
-    if (btnModeLive && btnModeTextpad) {
-        btnModeLive.addEventListener("click", () => {
-            btnModeLive.classList.add("active");
-            btnModeTextpad.classList.remove("active");
-            viewModeLive.style.display = "block";
-            viewModeTextpad.style.display = "none";
             if (kbLiveInput) kbLiveInput.focus();
         });
+    }
 
-        btnModeTextpad.addEventListener("click", () => {
-            btnModeTextpad.classList.add("active");
-            btnModeLive.classList.remove("active");
-            viewModeTextpad.style.display = "block";
-            viewModeLive.style.display = "none";
-            if (kbTextpadInput) kbTextpadInput.focus();
+    // =========================================================================
+    // Direct Media Transfer Controller (Browse, Show, Direct PC Transfer)
+    // =========================================================================
+    let stagedMedia = null; // { file: File|Blob, name: string, size: number, type: string, previewUrl?: string }
+
+    function formatBytes(bytes) {
+        if (!bytes || bytes === 0) return "0 B";
+        const k = 1024;
+        const sizes = ["B", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+    }
+
+    function stageCompactMedia(media) {
+        stagedMedia = media;
+        if (compactStagedStrip) compactStagedStrip.style.display = "flex";
+        if (stagedFileName) stagedFileName.textContent = media.name;
+        if (stagedFileSize) stagedFileSize.textContent = formatBytes(media.size);
+
+        if (stagedThumbBox) {
+            stagedThumbBox.innerHTML = "";
+            if (media.previewUrl) {
+                const img = document.createElement("img");
+                img.src = media.previewUrl;
+                img.alt = media.name;
+                stagedThumbBox.appendChild(img);
+            } else {
+                stagedThumbBox.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" style="color:var(--color-cyan);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>`;
+            }
+        }
+
+        if (btnShowPreview) {
+            btnShowPreview.disabled = false;
+        }
+    }
+
+    function unstageCompactMedia() {
+        stagedMedia = null;
+        if (compactStagedStrip) compactStagedStrip.style.display = "none";
+        if (compactImagePicker) compactImagePicker.value = "";
+        if (compactFilePicker) compactFilePicker.value = "";
+        if (btnShowPreview) btnShowPreview.disabled = true;
+        if (compactUploadProgress) compactUploadProgress.style.display = "none";
+    }
+
+    if (btnCancelStaged) {
+        btnCancelStaged.addEventListener("click", unstageCompactMedia);
+    }
+
+    // Browse Image Trigger
+    if (btnBrowseImage && compactImagePicker) {
+        btnBrowseImage.addEventListener("click", () => {
+            compactImagePicker.click();
+        });
+
+        compactImagePicker.addEventListener("change", (e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            const previewUrl = URL.createObjectURL(file);
+            stageCompactMedia({
+                file: file,
+                name: file.name,
+                size: file.size,
+                type: "image",
+                previewUrl: previewUrl
+            });
+            showToast(`Selected image: ${file.name}`);
         });
     }
 
-    // Tool 2: Desktop TextPad (Multi-line block sender)
-    btnSendTextpad.addEventListener("click", () => {
-        const content = kbTextpadInput.value;
-        if (!content || content.trim().length === 0) {
-            showToast("Please enter some text in the TextPad first!");
+    // Browse File Trigger
+    if (btnBrowseFile && compactFilePicker) {
+        btnBrowseFile.addEventListener("click", () => {
+            compactFilePicker.click();
+        });
+
+        compactFilePicker.addEventListener("change", (e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            stageCompactMedia({
+                file: file,
+                name: file.name,
+                size: file.size,
+                type: "file"
+            });
+            showToast(`Selected file: ${file.name}`);
+        });
+    }
+
+    // Show Lightbox Modal
+    function openImagePreviewModal() {
+        if (!stagedMedia) {
+            showToast("Browse an image first to preview.");
+            return;
+        }
+        if (modalImagePreview && previewModalImg) {
+            previewModalImg.src = stagedMedia.previewUrl || "";
+            if (previewModalTitle) previewModalTitle.textContent = stagedMedia.name;
+            if (previewModalSub) previewModalSub.textContent = `${formatBytes(stagedMedia.size)} • Original Image (No Path)`;
+            modalImagePreview.style.display = "flex";
+        }
+    }
+
+    function closeImagePreviewModal() {
+        if (modalImagePreview) modalImagePreview.style.display = "none";
+    }
+
+    if (btnShowPreview) {
+        btnShowPreview.addEventListener("click", openImagePreviewModal);
+    }
+    if (btnTriggerShowPreview) {
+        btnTriggerShowPreview.addEventListener("click", openImagePreviewModal);
+    }
+    if (btnCloseImageModal) {
+        btnCloseImageModal.addEventListener("click", closeImagePreviewModal);
+    }
+    if (btnDismissImageModal) {
+        btnDismissImageModal.addEventListener("click", closeImagePreviewModal);
+    }
+
+    // Direct Media Transfer Execution (Uploads original without showing paths)
+    function executeDirectTransfer() {
+        if (!stagedMedia) {
+            showToast("Please browse an image or file first!");
             return;
         }
 
-        sendMessage({
-            type: "text",
-            text: content
+        const current = stagedMedia;
+        closeImagePreviewModal();
+
+        if (compactUploadProgress && compactUploadBar && compactUploadText) {
+            compactUploadProgress.style.display = "block";
+            compactUploadBar.style.width = "0%";
+            compactUploadText.textContent = `Directly transferring ${current.name} to PC...`;
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/upload", true);
+        const pinVal = inputPin ? inputPin.value.trim() : "";
+        xhr.setRequestHeader("x-pin", pinVal);
+        xhr.setRequestHeader("x-file-name", encodeURIComponent(current.name));
+        xhr.setRequestHeader("Content-Type", "application/octet-stream");
+
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable && compactUploadBar && compactUploadText) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                compactUploadBar.style.width = `${percent}%`;
+                compactUploadText.textContent = `Transferring ${percent}%...`;
+            }
+        };
+
+        xhr.onload = () => {
+            if (compactUploadProgress) compactUploadProgress.style.display = "none";
+            if (xhr.status === 200) {
+                if (compactTransferStatus) {
+                    compactTransferStatus.textContent = `✓ Original ${current.name} transferred & copied to PC clipboard!`;
+                    compactTransferStatus.style.display = "block";
+                    setTimeout(() => {
+                        if (compactTransferStatus) compactTransferStatus.style.display = "none";
+                    }, 4500);
+                }
+                showToast(`✓ Original ${current.name} transferred & copied to PC clipboard!`);
+                unstageCompactMedia();
+                if (typeof fetchFilesList === "function") fetchFilesList();
+            } else {
+                showToast("Transfer failed: " + xhr.responseText);
+            }
+        };
+
+        xhr.onerror = () => {
+            if (compactUploadProgress) compactUploadProgress.style.display = "none";
+            showToast("Transfer error. Check PC connection.");
+        };
+
+        xhr.send(current.file);
+    }
+
+    if (btnTransferDirectNow) {
+        btnTransferDirectNow.addEventListener("click", executeDirectTransfer);
+    }
+    if (btnModalDirectTransfer) {
+        btnModalDirectTransfer.addEventListener("click", executeDirectTransfer);
+    }
+
+    // Art Studio Canvas Integration with Direct Transfer
+    let artCtx = null;
+    let isDrawingArt = false;
+    let artColor = "#00f0ff";
+    let artBrushSize = 5;
+    let lastArtX = 0;
+    let lastArtY = 0;
+
+    function initArtCanvas() {
+        if (!artCanvas) return;
+        artCtx = artCanvas.getContext("2d");
+        const rect = artCanvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const width = rect.width > 0 ? rect.width : 500;
+        const height = 320;
+
+        artCanvas.width = width * dpr;
+        artCanvas.height = height * dpr;
+        artCanvas.style.height = `${height}px`;
+
+        artCtx.scale(dpr, dpr);
+        artCtx.lineCap = "round";
+        artCtx.lineJoin = "round";
+
+        artCtx.fillStyle = "#080d16";
+        artCtx.fillRect(0, 0, width, height);
+    }
+
+    function getCanvasCoordinates(e) {
+        const rect = artCanvas.getBoundingClientRect();
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        }
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function startArtStroke(e) {
+        e.preventDefault();
+        isDrawingArt = true;
+        const coords = getCanvasCoordinates(e);
+        lastArtX = coords.x;
+        lastArtY = coords.y;
+        artCtx.beginPath();
+        artCtx.arc(lastArtX, lastArtY, artBrushSize / 2, 0, Math.PI * 2);
+        artCtx.fillStyle = artColor;
+        artCtx.fill();
+    }
+
+    function moveArtStroke(e) {
+        if (!isDrawingArt) return;
+        e.preventDefault();
+        const coords = getCanvasCoordinates(e);
+        artCtx.beginPath();
+        artCtx.moveTo(lastArtX, lastArtY);
+        artCtx.lineTo(coords.x, coords.y);
+        artCtx.strokeStyle = artColor;
+        artCtx.lineWidth = artBrushSize;
+        artCtx.stroke();
+        lastArtX = coords.x;
+        lastArtY = coords.y;
+    }
+
+    function endArtStroke(e) {
+        if (!isDrawingArt) return;
+        e.preventDefault();
+        isDrawingArt = false;
+        artCtx.closePath();
+    }
+
+    if (artCanvas) {
+        artCanvas.addEventListener("pointerdown", startArtStroke);
+        artCanvas.addEventListener("pointermove", moveArtStroke);
+        artCanvas.addEventListener("pointerup", endArtStroke);
+        artCanvas.addEventListener("pointercancel", endArtStroke);
+    }
+
+    colorSwatches.forEach(swatch => {
+        swatch.addEventListener("click", () => {
+            colorSwatches.forEach(s => s.classList.remove("active"));
+            swatch.classList.add("active");
+            artColor = swatch.getAttribute("data-color") || "#00f0ff";
+        });
+    });
+
+    brushSizeBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            brushSizeBtns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            artBrushSize = parseInt(btn.getAttribute("data-size") || "5", 10);
+        });
+    });
+
+    if (btnClearArtCanvas && artCanvas) {
+        btnClearArtCanvas.addEventListener("click", () => {
+            if (!artCtx) return;
+            const rect = artCanvas.getBoundingClientRect();
+            artCtx.fillStyle = "#080d16";
+            artCtx.fillRect(0, 0, rect.width, 360);
+            showToast("Canvas cleared");
+        });
+    }
+
+    if (btnCloseArtModal && modalArtTransfer) {
+        btnCloseArtModal.addEventListener("click", () => {
+            modalArtTransfer.style.display = "none";
+        });
+    }
+
+    if (btnSubmitArtTransfer && artCanvas) {
+        btnSubmitArtTransfer.addEventListener("click", () => {
+            artCanvas.toBlob((blob) => {
+                if (!blob) {
+                    showToast("Could not export art canvas.");
+                    return;
+                }
+                const filename = `sketch_${Date.now()}.png`;
+                const previewUrl = URL.createObjectURL(blob);
+                stageCompactMedia({
+                    file: blob,
+                    name: filename,
+                    size: blob.size,
+                    type: "image",
+                    previewUrl: previewUrl
+                });
+                if (modalArtTransfer) modalArtTransfer.style.display = "none";
+                showToast("Art sketch ready for direct transfer!");
+            }, "image/png");
+        });
+    }
+
+    // =========================================================================
+    // Press-and-Hold (Auto-Repeat) for Backspace, Delete & Arrow Keys
+    // =========================================================================
+    function setupHoldToRepeatKey(element, getKeyName, options = {}) {
+        if (!element) return;
+        const initialDelay = options.initialDelay || 250;
+        const repeatIntervalMs = options.repeatInterval || 60;
+        let holdTimeout = null;
+        let repeatInterval = null;
+        let isHolding = false;
+        let activePointerId = null;
+
+        function fireKey() {
+            const key = typeof getKeyName === 'function' ? getKeyName() : getKeyName;
+            if (!key) return;
+            sendMessage({ type: "keycode", key: key });
+            if (navigator.vibrate) {
+                try { navigator.vibrate(14); } catch (err) {}
+            }
+        }
+
+        function startHold(e) {
+            if (e && e.button && e.button !== 0) return;
+            if (isHolding) return;
+            isHolding = true;
+
+            if (e && e.pointerId != null && element.setPointerCapture) {
+                try {
+                    element.setPointerCapture(e.pointerId);
+                    activePointerId = e.pointerId;
+                } catch (err) {}
+            }
+
+            element.classList.add("pressed");
+            fireKey();
+
+            holdTimeout = setTimeout(() => {
+                element.classList.add("repeating");
+                repeatInterval = setInterval(() => {
+                    fireKey();
+                }, repeatIntervalMs);
+            }, initialDelay);
+        }
+
+        function stopHold(e) {
+            if (!isHolding) return;
+            isHolding = false;
+
+            if (activePointerId != null && element.releasePointerCapture) {
+                try {
+                    element.releasePointerCapture(activePointerId);
+                } catch (err) {}
+                activePointerId = null;
+            }
+            if (holdTimeout) {
+                clearTimeout(holdTimeout);
+                holdTimeout = null;
+            }
+            if (repeatInterval) {
+                clearInterval(repeatInterval);
+                repeatInterval = null;
+            }
+            element.classList.remove("pressed", "repeating");
+        }
+
+        // Pointer Events (primary modern input)
+        element.addEventListener("pointerdown", startHold);
+        element.addEventListener("pointerup", stopHold);
+        element.addEventListener("pointercancel", stopHold);
+        element.addEventListener("pointerleave", (e) => {
+            if (e.pointerType === "mouse") stopHold(e);
         });
 
-        showToast(`Sent ${content.length} characters to Desktop TextPad!`);
+        // Touch event fallbacks for mobile browsers
+        element.addEventListener("touchend", stopHold, { passive: true });
+        element.addEventListener("touchcancel", stopHold, { passive: true });
+
+        // Mouse fallbacks
+        element.addEventListener("mouseup", stopHold);
+
+        // Suppress default context menu & click
+        element.addEventListener("contextmenu", (e) => e.preventDefault());
+        element.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    }
+
+    // Attach Hold-to-Repeat to Live Backspace pill
+    if (btnLiveBackspace) {
+        setupHoldToRepeatKey(btnLiveBackspace, "backspace");
+    }
+
+    // Attach Hold-to-Repeat to all buttons with .hold-repeat-btn (Arrow keys, Backspace, Delete)
+    const holdRepeatBtns = document.querySelectorAll(".hold-repeat-btn");
+    holdRepeatBtns.forEach(btn => {
+        if (btn === btnLiveBackspace) return;
+        const key = btn.getAttribute("data-key");
+        if (key) {
+            setupHoldToRepeatKey(btn, key);
+        }
     });
 
-    btnTextpadClear.addEventListener("click", () => {
-        kbTextpadInput.value = "";
-        showToast("TextPad cleared");
-    });
+    // Enter Key Dedicated Trigger
+    if (btnProminentEnter) {
+        let enterDebounce = false;
+        function triggerEnterKey(e) {
+            if (e && e.button && e.button !== 0) return;
+            if (e && e.cancelable) e.preventDefault();
+            if (enterDebounce) return;
+            enterDebounce = true;
+            setTimeout(() => { enterDebounce = false; }, 140);
 
-    if (btnClearAllText) {
-        btnClearAllText.addEventListener("click", () => {
-            kbLiveInput.value = "";
-            kbTextpadInput.value = "";
-            showToast("All text cleared");
+            btnProminentEnter.classList.add("pressed");
+            setTimeout(() => btnProminentEnter.classList.remove("pressed"), 180);
+
+            if (navigator.vibrate) {
+                try { navigator.vibrate(25); } catch (err) {}
+            }
+
+            if (altTabCycleStep > 0) {
+                finishPrimaryAltTab();
+            }
+
+            sendMessage({
+                type: "keycode",
+                key: "enter"
+            });
+        }
+
+        btnProminentEnter.addEventListener("pointerdown", triggerEnterKey);
+        btnProminentEnter.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            triggerEnterKey(e);
+        });
+    }
+
+    // =========================================================================
+    // Primary Key & Modifier Alt+Tab App Switcher Controller
+    // =========================================================================
+    const btnPrimaryAltTab = document.getElementById("btn-primary-alt-tab");
+    let altTabCycleStep = 0;
+    let altTabReleaseTimer = null;
+    let altTabHoldInterval = null;
+
+    function stepPrimaryAltTab() {
+        altTabCycleStep++;
+        sendMessage({ type: "alt_tab_step", direction: "next" });
+
+        if (btnPrimaryAltTab) {
+            btnPrimaryAltTab.classList.add("cycling");
+            const screenLabel = altTabCycleStep === 1 ? "2nd App" : altTabCycleStep === 2 ? "3rd App" : `${altTabCycleStep + 1}th App`;
+            btnPrimaryAltTab.textContent = `Alt+Tab (${screenLabel})`;
+        }
+
+        if (navigator.vibrate) navigator.vibrate(22);
+
+        if (altTabReleaseTimer) clearTimeout(altTabReleaseTimer);
+        altTabReleaseTimer = setTimeout(() => {
+            finishPrimaryAltTab();
+        }, 1800);
+
+        const screenName = altTabCycleStep === 1 ? "2nd" : altTabCycleStep === 2 ? "3rd" : `${altTabCycleStep + 1}th`;
+        showToast(`Swapping to ${screenName} screen (Tap again for next app)...`);
+    }
+
+    function finishPrimaryAltTab() {
+        if (altTabReleaseTimer) {
+            clearTimeout(altTabReleaseTimer);
+            altTabReleaseTimer = null;
+        }
+        if (altTabHoldInterval) {
+            clearInterval(altTabHoldInterval);
+            altTabHoldInterval = null;
+        }
+        if (altTabCycleStep > 0) {
+            sendMessage({ type: "alt_tab_release" });
+            showToast("Switched to app ✓");
+        }
+        altTabCycleStep = 0;
+        if (btnPrimaryAltTab) {
+            btnPrimaryAltTab.classList.remove("cycling");
+            btnPrimaryAltTab.textContent = "Alt+Tab ⇥";
+        }
+    }
+
+    if (btnPrimaryAltTab) {
+        let holdStartTimer = null;
+        btnPrimaryAltTab.addEventListener("pointerdown", (e) => {
+            if (e.button && e.button !== 0) return;
+            stepPrimaryAltTab();
+
+            // Continuous hold to advance tabs
+            holdStartTimer = setTimeout(() => {
+                altTabHoldInterval = setInterval(() => {
+                    stepPrimaryAltTab();
+                }, 320);
+            }, 380);
+        });
+
+        const stopHoldAction = () => {
+            if (holdStartTimer) {
+                clearTimeout(holdStartTimer);
+                holdStartTimer = null;
+            }
+            if (altTabHoldInterval) {
+                clearInterval(altTabHoldInterval);
+                altTabHoldInterval = null;
+            }
+        };
+
+        btnPrimaryAltTab.addEventListener("pointerup", stopHoldAction);
+        btnPrimaryAltTab.addEventListener("pointercancel", stopHoldAction);
+        btnPrimaryAltTab.addEventListener("pointerleave", stopHoldAction);
+
+        btnPrimaryAltTab.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
         });
     }
 
     // Tool 3: Keycode Buttons & Modifiers
     keycodeBtns.forEach(btn => {
+        // Skip buttons with dedicated hold handlers, primary Alt+Tab, or dedicated Enter
+        if (btn.classList.contains("hold-repeat-btn") || btn === btnPrimaryAltTab || btn === btnProminentEnter) {
+            return;
+        }
+
         btn.addEventListener("click", () => {
+            // Any other keycode press finishes any active Alt+Tab session
+            if (altTabCycleStep > 0) {
+                finishPrimaryAltTab();
+            }
+
             const keyName = btn.getAttribute("data-key");
             if (!keyName) return;
 
@@ -1163,6 +1845,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const port = window.localStorage.getItem("virtualMouse.lastConnectedPort") || inputPort.value.trim();
         const pin = window.localStorage.getItem("virtualMouse.lastConnectedPin") || inputPin.value.trim();
         if (ip && pin) {
+            isUserDisconnect = false;
+            window.localStorage.setItem("virtualMouse.userDisconnected", "false");
             connectToServer(ip, port, pin);
         } else {
             showToast("Please enter IP and Connect PIN on the home screen.");
@@ -1213,6 +1897,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const port = window.localStorage.getItem("virtualMouse.lastConnectedPort") || inputPort.value.trim();
             const pin = window.localStorage.getItem("virtualMouse.lastConnectedPin") || inputPin.value.trim();
             if (ip && pin) {
+                isUserDisconnect = false;
+                window.localStorage.setItem("virtualMouse.userDisconnected", "false");
                 connectToServer(ip, port, pin);
             } else {
                 navigateTo("screen-home");

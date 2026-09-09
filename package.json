@@ -6,7 +6,9 @@
     "packages/*"
   ],
   "scripts": {
-    "start": "npm start --workspace=mouse-vm"
+    "start": "npm start --workspace=mouse-vm",
+    "dev": "npm run dev --workspace=mouse-vm",
+    "mouse-vm": "npm start --workspace=mouse-vm"
   },
   "engines": {
     "node": ">=20.0.0 || >=22.0.0 || >=24.0.0"
