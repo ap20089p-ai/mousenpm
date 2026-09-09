@@ -89,7 +89,7 @@
                     <!-- Option 1: IP + Port + PIN Form -->
                     <div class="option-header-badge">
                         <span class="badge-num">1</span>
-                        <span>Connect with IP & Connect PIN</span>
+                        <span>Connect with Connect PIN</span>
                     </div>
 
                     <div class="input-group">
@@ -104,19 +104,13 @@
                     <button class="options-accordion-btn" id="btn-toggle-wifi-options" type="button">
                         <div class="acc-btn-left">
                             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="acc-icon"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                            <span>Advanced Options (IP, Port, Device Name)</span>
+                            <span>Advanced Options (Port, Device Name)</span>
                         </div>
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="chevron-icon"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </button>
 
                     <div class="options-accordion-content" id="wifi-advanced-options">
-                        <div class="input-group" style="margin-bottom: 12px;">
-                            <label>Desktop IP Address</label>
-                            <div class="input-wrapper">
-                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="input-icon"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                                <input type="text" id="ip-address" placeholder="e.g. 10.145.195.86">
-                            </div>
-                        </div>
+                        <input type="hidden" id="ip-address">
 
                         <div class="input-row-dual">
                             <div class="input-group">
@@ -232,7 +226,7 @@
                     </div>
                     <div>
                         <h3 id="lbl-device-title">My PC</h3>
-                        <p id="lbl-device-address">10.145.195.86:5001</p>
+                        <p id="lbl-device-address">Wireless Connected</p>
                     </div>
                 </div>
                 
@@ -873,6 +867,6 @@
     </div>
 
     <!-- Application Script with Cache Buster -->
-    <script src="app.js?v=2.9"></script>
+    <script src="app.js?v=3.0"></script>
 </body>
 </html>

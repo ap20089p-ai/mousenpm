@@ -32,12 +32,20 @@ You can also run or install `mouse-vm` anywhere on your machine via npm:
 # Run instantly with npx (no install required):
 npx mouse-vm
 
-# Or install globally:
-npm install -g mouse-vm
+# Or install / update to latest globally:
+npm install -g mouse-vm@latest
+
+# Force reinstall if needed (bypasses cache/conflicts):
+npm install -g mouse-vm@latest --force
+
+# Check installed version:
+mouse-vm --version
 
 # Then start anytime with:
 mouse-vm
-# (Aliases: vm2do, vm)
+
+# To uninstall:
+npm uninstall -g mouse-vm
 ```
 
 The terminal will generate your PC's local Wi-Fi IP address, web port, pairing PIN, and an ASCII **QR Code**:
@@ -46,7 +54,6 @@ The terminal will generate your PC's local Wi-Fi IP address, web port, pairing P
 ================================================================
         [+] VIRTUAL MOUSE & KEYBOARD SERVER ACTIVE
 ================================================================
-  [+] Mobile IP (Wi-Fi):       <YOUR-LOCAL-IP>
   [+] Web & WS Port:           5000
   [*] CONNECT CODE (PIN):      <4-DIGIT-PIN>
   [+] File Transfer Directory: <YOUR-TRANSFER-DIRECTORY>
@@ -103,37 +110,78 @@ The terminal will generate your PC's local Wi-Fi IP address, web port, pairing P
 
 ---
 
-## 💻 PC Terminal Keyboard Shortcuts
+## 📜 All Commands Reference
 
-While `mouse-vm` is running in your PC terminal, press:
+### 1. Repository & Local Development Commands
+Run these commands from the project root (`c:\project\mouseirtual`):
 
-| Shortcut                  | Action                                                                 |
-| :------------------------ | :--------------------------------------------------------------------- |
-| `Ctrl+U` (or `Alt+U`) | Open a Windows file selection dialog to choose files to send to mobile |
-| `Ctrl+V` (or `Alt+V`) | Paste clipboard files or text directly into the file transfer folder   |
-| `Ctrl+S` (or `Alt+S`) | Open the file transfer directory in Windows Explorer                   |
-| `Ctrl+C` or `q`       | Safely stop the server and restore terminal settings                   |
+| Command | Description |
+| :--- | :--- |
+| `npm install` | Install all required dependencies for root and workspace packages |
+| `npm start` | Start the server in standard workspace mode (`node server.js`) |
+| `npm run dev` | Start development server with auto-reload / hot file-watch (`node --watch`) |
+| `npm run mouse-vm` | Run workspace package directly |
+| `node server.js` | Run server directly with Node.js |
 
 ---
 
-## ⚙️ Advanced CLI Flags
+### 2. Global CLI & NPX Commands
+Run anywhere on your machine after installing or with `npx`:
 
-You can customize port, pairing PIN, or transfer directory:
+| Command | Description |
+| :--- | :--- |
+| `npx mouse-vm` | Run server instantly without manual installation |
+| `npm install -g mouse-vm@latest` | Install or update `mouse-vm` to latest version globally |
+| `npm install -g mouse-vm@latest --force` | Force-install latest version (overwriting cache / conflicts) |
+| `mouse-vm --version` | Display installed CLI version |
+| `mouse-vm` | Start server using primary CLI command |
+| `npm uninstall -g mouse-vm` | Completely uninstall `mouse-vm` global package |
 
+---
+
+### 3. CLI Arguments & Flags Reference
+Customize the server configuration using command-line arguments:
+
+| Flag / Option | Description | Default | Example |
+| :--- | :--- | :--- | :--- |
+| `--port=<number>` | Set custom HTTP port (WS runs on port + 1) | `5000` | `mouse-vm --port=8080` |
+| `--pin=<4-digits>` | Set fixed 4-digit Connect PIN | Random | `mouse-vm --pin=1234` |
+| `--transfer-path=<path>` | Custom directory for file transfers | `./transfers` | `mouse-vm --transfer-path="D:\Files"` |
+| `-v`, `--version` | Display installed package version | - | `mouse-vm --version` |
+| `-h`, `--help` | Show command usage and options help menu | - | `mouse-vm --help` |
+
+#### Combined Flag Examples:
 ```bash
-# Custom HTTP Port (default: 5000, WS port will be port + 1)
-mouse-vm --port=8080
+# Custom port, fixed PIN, and custom file transfer directory
+mouse-vm --port=8080 --pin=7777 --transfer-path="C:\Users\YourName\Desktop\Files"
 
-# Custom 4-digit pairing PIN (default: random 4-digit PIN)
-mouse-vm --pin=1234
-
-# Custom File Transfer Directory
-mouse-vm --transfer-path="C:\Users\YourName\Desktop\Transfers"
-
-# Show Version & Help
-mouse-vm --version
-mouse-vm --helpI
+# Run with NPX using custom port
+npx mouse-vm --port=3000 --pin=4321
 ```
+
+---
+
+### 4. Interactive Terminal Keyboard Shortcuts (Hotkeys)
+Press these hotkeys in the active server terminal while `mouse-vm` is running:
+
+| Shortcut | Action |
+| :--- | :--- |
+| `Ctrl+U` (or `Alt+U` / `Cmd+U`) | Open Windows file picker dialog to choose and send files to mobile |
+| `Ctrl+V` (or `Alt+V` / `Cmd+V`) | Paste clipboard files or text directly into the file transfer folder |
+| `Ctrl+S` (or `Alt+S` / `Cmd+S`) | Open the file transfer folder directly in Windows Explorer |
+| `Ctrl+C` or `q` | Safely stop and shut down the server |
+
+---
+
+### 5. Windows Diagnostics & Troubleshooting Commands
+Helpful commands to troubleshoot network or port conflicts:
+
+| Command | Purpose |
+| :--- | :--- |
+| `ipconfig` | Display your PC's local Wi-Fi IPv4 and IPv6 addresses |
+| `netstat -ano \| findstr :5000` | Check if port 5000 is currently occupied and find its PID |
+| `taskkill /PID <PID> /F` | Terminate a process locking port 5000 |
+| `ping <PC-IP-ADDRESS>` | Test network reachability between phone and PC |
 
 ---
 

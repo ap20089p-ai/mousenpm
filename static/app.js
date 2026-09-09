@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (hasScanParams) {
             const splashTagline = document.querySelector(".splash-tagline");
             if (splashTagline) {
-                splashTagline.innerHTML = `<span style="color:#00f0ff;font-weight:600;display:inline-flex;align-items:center;gap:6px;"><span class="status-indicator connecting-state" style="display:inline-block;width:8px;height:8px;box-shadow:none;"></span> Connecting to PC (${targetAutoIp})...</span>`;
+                splashTagline.innerHTML = `<span style="color:#00f0ff;font-weight:600;display:inline-flex;align-items:center;gap:6px;"><span class="status-indicator connecting-state" style="display:inline-block;width:8px;height:8px;box-shadow:none;"></span> Connecting to PC...</span>`;
             }
         }
         if (!userExplicitlyDisconnected || hasScanParams) {
@@ -626,7 +626,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             
                             const devName = inputDevice.value || "My PC";
                             lblDeviceTitle.textContent = devName;
-                            lblDeviceAddress.textContent = `${ip}:${wsPort}`;
+                            if (lblDeviceAddress) lblDeviceAddress.textContent = "Wireless Connected";
                             
                             updateConnectionUI("connected");
                             startHeartbeat();

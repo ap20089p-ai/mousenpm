@@ -329,6 +329,37 @@ function getPrimaryIP() {
   return list.length > 0 ? list[0].address : '127.0.0.1';
 }
 
+function getPrimaryIPv6() {
+  const interfaces = os.networkInterfaces();
+  const candidates = [];
+
+  for (const name of Object.keys(interfaces)) {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('virtualbox') || lowerName.includes('vmware') || lowerName.includes('wsl') || lowerName.includes('vethernet') || lowerName.includes('loopback')) {
+      continue;
+    }
+
+    for (const net of interfaces[name]) {
+      const family = typeof net.family === 'string' ? net.family : (net.family === 6 ? 'IPv6' : 'IPv4');
+      if (family === 'IPv6' && !net.internal) {
+        let score = 10;
+        if (lowerName.includes('wi-fi') || lowerName.includes('wlan') || lowerName.includes('wireless')) {
+          score += 100;
+        } else if (lowerName.includes('ethernet')) {
+          score += 50;
+        }
+        if (!net.address.toLowerCase().startsWith('fe80:')) {
+          score += 200;
+        }
+        candidates.push({ address: net.address, score });
+      }
+    }
+  }
+
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates.length > 0 ? candidates[0].address : null;
+}
+
 // --- HTTP Server (Serving static/ PWA) ---
 const staticDir = path.join(__dirname, 'static');
 const app = express();
@@ -706,23 +737,29 @@ if (PORT_WS !== PORT_HTTP) {
   }
 }
 
-httpServer.listen(PORT_HTTP, '0.0.0.0', () => {
+httpServer.listen(PORT_HTTP, () => {
   const localIP = getPrimaryIP();
+  const localIPv6 = getPrimaryIPv6();
   const quickLink = `http://${localIP}:${PORT_HTTP}/?ip=${localIP}&port=${PORT_HTTP}&code=${SERVER_PIN}`;
 
   console.log('================================================================');
   console.log('        [+] VIRTUAL MOUSE & KEYBOARD SERVER ACTIVE');
   console.log('================================================================');
-  console.log(`  [+] PC Server IPv4:          ${localIP}`);
   console.log(`  [+] Web & WS Port:           ${PORT_HTTP}`);
   console.log(`  [*] CONNECT CODE (PIN):      ${SERVER_PIN}`);
+  console.log(`  [+] File Transfer Directory: ${TRANSFER_DIR}`);
   console.log('================================================================');
-  console.log('  [SCAN ME] QR CODE FOR MOBILE INSTANT CONNECT:');
+  console.log('  [SCAN ME] QR CODE FOR MOBILE INSTANT CONNECT');
+  console.log('================================================================');
   qrcode.toString(quickLink, { type: 'terminal', small: true }, (err, qrStr) => {
     if (!err && qrStr) {
       console.log(qrStr);
       console.log('================================================================');
     }
+    console.log('  - Press Ctrl+U (or Alt+U / Cmd+U) for file selection dialog');
+    console.log('  - Press Ctrl+V (or Alt+V / Cmd+V) to paste copied file/text');
+    console.log('  - Press Ctrl+S (or Alt+S / Cmd+S) to open save folder');
+    console.log('================================================================');
   });
 });
 
