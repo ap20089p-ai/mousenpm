@@ -1,6 +1,6 @@
 # 📱 mouse-vm
 
-> **Transform your smartphone or tablet into a high-performance wireless trackpad, live keyboard, file transfer hub, and desktop controller for Windows PC over Wi-Fi.**
+> **Transform your smartphone or tablet into a high-performance wireless trackpad, live keyboard, file transfer hub, and desktop controller for Windows, macOS, and Linux over Wi-Fi.**
 
 ---
 
@@ -15,6 +15,7 @@ npm start
 ```
 
 *(Alternative commands from this folder)*:
+
 ```bash
 node server.js
 # or
@@ -199,8 +200,8 @@ Helpful commands to troubleshoot network or port conflicts:
 
 #### 1. Mobile phone cannot connect to the server?
 
-* Ensure both PC and mobile device are connected to the **same Wi-Fi network**.
-* Check if Windows Firewall is blocking port `5000`. Allow `node.exe` through private networks.
+* Ensure both computer and mobile device are connected to the **same Wi-Fi network**.
+* Check if your firewall is blocking port `5000`. Allow Node through private networks.
 
 #### 2. Port 5000 is already in use (`EADDRINUSE`)?
 
@@ -208,3 +209,33 @@ Helpful commands to troubleshoot network or port conflicts:
   ```bash
   mouse-vm --port=8080
   ```
+
+#### 3. macOS Setup (Accessibility Permission)
+
+* macOS requires Accessibility permission for apps to simulate mouse clicks and keyboard keystrokes.
+* When running the server, if prompted, or go to:
+  **System Settings > Privacy & Security > Accessibility**
+* Enable toggle for your Terminal, iTerm, or IDE.
+* (Mouse pointer movement works out-of-the-box).
+
+#### 4. Linux Setup (X11 & Wayland)
+
+* For native X11 support, ensure `libxtst` is installed:
+  ```bash
+  # Debian / Ubuntu / Mint:
+  sudo apt install libxtst6
+
+  # Fedora / RHEL:
+  sudo dnf install libXtst
+
+  # Arch Linux:
+  sudo pacman -S libxtst
+  ```
+* Alternatively, `xdotool` (X11) or `ydotool` (Wayland) can be installed:
+  ```bash
+  sudo apt install xdotool
+  # or
+  sudo apt install ydotool
+  ```
+
+---
